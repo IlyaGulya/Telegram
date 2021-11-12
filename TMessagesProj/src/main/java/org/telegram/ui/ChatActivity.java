@@ -98,7 +98,6 @@ import androidx.recyclerview.widget.LinearSmoothScrollerCustom;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
-import com.google.android.exoplayer2.util.Log;
 
 import org.telegram.PhoneFormat.PhoneFormat;
 import org.telegram.messenger.AccountInstance;
@@ -19950,38 +19949,42 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
             shadowDrawable.getPadding(backgroundPaddings);
             popupLayout.setBackgroundColor(getThemedColor(Theme.key_actionBarDefaultSubmenuBackground));
 
-            scrimPopupWindowItems = new ActionBarMenuSubItem[items.size() + (selectedObject.isSponsored() ? 1 : 0)];
-            for (int a = 0, N = items.size(); a < N; a++) {
-                if (a == 0 && selectedObject.isSponsored()) {
-                    ActionBarMenuSubItem cell = new ActionBarMenuSubItem(getParentActivity(), true, true, themeDelegate);
-                    cell.setTextAndIcon(LocaleController.getString("SponsoredMessageInfo", R.string.SponsoredMessageInfo), R.drawable.menu_info);
-                    cell.setItemHeight(56);
-                    cell.setTag(R.id.width_tag, 240);
-                    cell.setMultiline();
-                    scrimPopupWindowItems[scrimPopupWindowItems.length - 1] = cell;
-                    popupLayout.addView(cell);
-                    cell.setOnClickListener(v1 -> {
-                        if (contentView == null || getParentActivity() == null) {
-                            return;
-                        }
-                        BottomSheet.Builder builder = new BottomSheet.Builder(contentView.getContext());
-                        builder.setCustomView(new SponsoredMessageInfoView(getParentActivity(), themeDelegate));
-                        builder.show();
-                    });
+            scrimPopupWindowItems = new ActionBarMenuSubItem[items.size()];
 
-                    View gap = new View(getParentActivity());
-                    gap.setMinimumWidth(AndroidUtilities.dp(196));
-                    gap.setTag(1000);
-                    gap.setTag(R.id.object_tag, 1);
-                    popupLayout.addView(gap);
-                    LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) cell.getLayoutParams();
-                    if (LocaleController.isRTL) {
-                        layoutParams.gravity = Gravity.RIGHT;
+            if (selectedObject.isSponsored()) {
+                scrimPopupWindowItems = Arrays.copyOf(scrimPopupWindowItems, scrimPopupWindowItems.length + 1);
+
+                ActionBarMenuSubItem cell = new ActionBarMenuSubItem(getParentActivity(), true, true, themeDelegate);
+                cell.setTextAndIcon(LocaleController.getString("SponsoredMessageInfo", R.string.SponsoredMessageInfo), R.drawable.menu_info);
+                cell.setItemHeight(56);
+                cell.setTag(R.id.width_tag, 240);
+                cell.setMultiline();
+                scrimPopupWindowItems[scrimPopupWindowItems.length - 1] = cell;
+                popupLayout.addView(cell);
+                cell.setOnClickListener(v1 -> {
+                    if (contentView == null || getParentActivity() == null) {
+                        return;
                     }
-                    layoutParams.width = LayoutHelper.MATCH_PARENT;
-                    layoutParams.height = AndroidUtilities.dp(6);
-                    gap.setLayoutParams(layoutParams);
+                    BottomSheet.Builder builder = new BottomSheet.Builder(contentView.getContext());
+                    builder.setCustomView(new SponsoredMessageInfoView(getParentActivity(), themeDelegate));
+                    builder.show();
+                });
+
+                View gap = new View(getParentActivity());
+                gap.setMinimumWidth(AndroidUtilities.dp(196));
+                gap.setTag(1000);
+                gap.setTag(R.id.object_tag, 1);
+                popupLayout.addView(gap);
+                LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) cell.getLayoutParams();
+                if (LocaleController.isRTL) {
+                    layoutParams.gravity = Gravity.RIGHT;
                 }
+                layoutParams.width = LayoutHelper.MATCH_PARENT;
+                layoutParams.height = AndroidUtilities.dp(6);
+                gap.setLayoutParams(layoutParams);
+            }
+
+            for (int a = 0, N = items.size(); a < N; a++) {
                 ActionBarMenuSubItem cell = new ActionBarMenuSubItem(getParentActivity(), a == 0, a == N - 1, themeDelegate);
                 cell.setMinimumWidth(AndroidUtilities.dp(200));
                 cell.setTextAndIcon(items.get(a), icons.get(a));
@@ -20006,6 +20009,30 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                         scrimPopupWindow.dismiss();
                     }
                 });
+            }
+
+            if (selectedObject.isForwardRestricted()) {
+                scrimPopupWindowItems = Arrays.copyOf(scrimPopupWindowItems, scrimPopupWindowItems.length + 1);
+
+                View gap = new View(getParentActivity());
+                gap.setTag(1000);
+                gap.setTag(R.id.object_tag, 1);
+                popupLayout.addView(gap);
+                LinearLayout.LayoutParams layoutParams = LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, AndroidUtilities.dp(8));
+                if (LocaleController.isRTL) {
+                    layoutParams.gravity = Gravity.RIGHT;
+                }
+                gap.setLayoutParams(layoutParams);
+
+
+
+                ActionBarMenuSubItem cell = new ActionBarMenuSubItem(getParentActivity(), true, true, themeDelegate);
+                cell.setText(LocaleController.getString("ForwardsRestrictedMessageInfo", R.string.ForwardsRestrictedMessageInfo));
+                cell.setItemHeight(56);
+                cell.setTag(R.id.width_tag, 240);
+                cell.setMultiline();
+                scrimPopupWindowItems[scrimPopupWindowItems.length - 1] = cell;
+                popupLayout.addView(cell);
             }
 
             LinearLayout scrimPopupContainerLayout = new LinearLayout(contentView.getContext()) {
