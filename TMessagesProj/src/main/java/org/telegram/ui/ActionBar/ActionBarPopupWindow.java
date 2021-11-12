@@ -153,6 +153,9 @@ public class ActionBarPopupWindow extends PopupWindow {
                         backgroundsEndY.clear();
 
                         backgroundsStartY.add(0);
+
+                        int childCountBetweenGaps = 0;
+
                         for (int a = 0, N = getChildCount(); a < N; a++) {
                             View view = getChildAt(a);
                             if (view.getVisibility() == GONE) {
@@ -161,18 +164,31 @@ public class ActionBarPopupWindow extends PopupWindow {
                             Object tag = view.getTag(R.id.width_tag);
                             Object tag2 = view.getTag(R.id.object_tag);
 
-                            if (tag2 != null) {
-                                backgroundsEndY.add(currentHeight);
-                                backgroundsStartY.add(currentHeight + view.getMeasuredHeight());
-
-                                currentHeight += bgPaddings.top;
-                            }
-                            currentHeight += view.getMeasuredHeight();
-
                             if (tag != null) {
                                 view.getLayoutParams().width = LayoutHelper.WRAP_CONTENT;
                             }
                             measureChildWithMargins(view, widthMeasureSpec, 0, heightMeasureSpec, 0);
+
+                            if (tag2 != null) {
+                                if (childCountBetweenGaps == 1) {
+                                    backgroundsEndY.add(currentHeight - bgPaddings.bottom);
+                                } else {
+                                    backgroundsEndY.add(currentHeight);
+                                }
+                                backgroundsStartY.add(currentHeight + view.getMeasuredHeight());
+
+                                currentHeight += bgPaddings.top;
+
+                                childCountBetweenGaps = 0;
+                            } else {
+                                childCountBetweenGaps++;
+
+                                if (a == N - 1) {
+                                    backgroundsEndY.add(currentHeight + view.getMeasuredHeight());
+                                }
+                            }
+                            currentHeight += view.getMeasuredHeight();
+
                             if (!(tag instanceof Integer) && tag2 == null) {
                                 maxWidth = Math.max(maxWidth, view.getMeasuredWidth());
                                 continue;
@@ -186,7 +202,6 @@ public class ActionBarPopupWindow extends PopupWindow {
                             viewsToFix.add(view);
                         }
 
-                        backgroundsEndY.add(MEASURED_BOTTOM);
 
                         if (viewsToFix != null) {
                             for (int a = 0, N = viewsToFix.size(); a < N; a++) {
