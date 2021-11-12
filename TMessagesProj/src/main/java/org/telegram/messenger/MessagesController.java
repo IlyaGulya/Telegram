@@ -21,7 +21,6 @@ import android.os.SystemClock;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 import android.util.SparseIntArray;
@@ -47,11 +46,11 @@ import org.telegram.ui.Components.AlertsCreator;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.JoinCallAlert;
 import org.telegram.ui.Components.MotionBackgroundDrawable;
+import org.telegram.ui.Components.SwipeGestureSettingsView;
 import org.telegram.ui.DialogsActivity;
 import org.telegram.ui.EditWidgetActivity;
 import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.ProfileActivity;
-import org.telegram.ui.Components.SwipeGestureSettingsView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -14604,6 +14603,23 @@ public class MessagesController extends BaseController implements NotificationCe
         mainPreferences.edit()
                 .putInt("chatPendingRequests" + chatId, count)
                 .apply();
+    }
+
+    public void toggleNoforwards(TLRPC.Chat chat, boolean noforward) {
+        TLRPC.TL_messages_toggleNoForwards req = new TLRPC.TL_messages_toggleNoForwards();
+        req.peer = getInputPeer(chat);
+        req.enabled = noforward;
+        getConnectionsManager().sendRequest(req, (response, error) -> {
+            if (response instanceof TLRPC.TL_boolTrue) {
+                AndroidUtilities.runOnUIThread(() -> {
+                    chat.noforwards = noforward;
+                    final ArrayList<TLRPC.Chat> chatsToUpdate = new ArrayList();
+                    chatsToUpdate.add(chat);
+
+                    getMessagesStorage().putUsersAndChats(null, chatsToUpdate, true, true);
+                });
+            }
+        }, ConnectionsManager.RequestFlagInvokeAfter);
     }
 
     public interface MessagesLoadedCallback {
