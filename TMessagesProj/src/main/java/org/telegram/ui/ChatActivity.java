@@ -20085,7 +20085,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 gap.setTag(1000);
                 gap.setTag(R.id.object_tag, 1);
                 popupLayout.addView(gap);
-                LinearLayout.LayoutParams layoutParams = LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, AndroidUtilities.dp(8));
+                LinearLayout.LayoutParams layoutParams = LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8);
                 if (LocaleController.isRTL) {
                     layoutParams.gravity = Gravity.RIGHT;
                 }
@@ -20304,7 +20304,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 View gap = new View(getParentActivity());
                 gap.setTag(R.id.object_tag, 1);
                 popupLayout.addView(gap);
-                LinearLayout.LayoutParams layoutParams = LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, AndroidUtilities.dp(8));
+                LinearLayout.LayoutParams layoutParams = LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8);
                 if (LocaleController.isRTL) {
                     layoutParams.gravity = Gravity.RIGHT;
                 }
