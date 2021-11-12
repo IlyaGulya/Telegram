@@ -4189,7 +4189,7 @@ public class MessageObject {
     public boolean needDrawShareButton() {
         if (preview) {
             return false;
-        } else if (isForwardRestricted()) {
+        } else if (isOwningChatForwardsRestricted()) {
             return false;
         } else if (scheduled) {
             return false;
@@ -4560,7 +4560,7 @@ public class MessageObject {
         return messageOwner.fwd_from.saved_from_peer == null || messageOwner.fwd_from.saved_from_peer.user_id == selfUserId;
     }
 
-    public boolean isForwardRestricted() {
+    public boolean isOwningChatForwardsRestricted() {
         final TLRPC.Chat chat = getChat(null, null, getChatId());
         if (chat == null || !ChatObject.isPrivate(chat)) {
             return false;

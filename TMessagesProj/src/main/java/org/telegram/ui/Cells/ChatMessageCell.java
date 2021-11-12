@@ -68,8 +68,6 @@ import android.widget.Toast;
 
 import androidx.core.graphics.ColorUtils;
 
-import com.google.android.exoplayer2.util.Log;
-
 import org.telegram.PhoneFormat.PhoneFormat;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
@@ -3073,7 +3071,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 lastPostAuthor != messageObject.messageOwner.post_author ||
                 wasPinned != isPinned ||
                 newReply != lastReplyMessage ||
-                wasForwardingRestricted != messageObject.isForwardRestricted();
+                wasForwardingRestricted != messageObject.isOwningChatForwardsRestricted();
         boolean groupChanged = groupedMessages != currentMessagesGroup;
         boolean pollChanged = false;
         if (drawCommentButton || drawSideButton == 3 && !((hasDiscussion && messageObject.isLinkedToChat(linkedChatId) || isRepliesChat) && (currentPosition == null || currentPosition.siblingHeights == null && (currentPosition.flags & MessageObject.POSITION_FLAG_BOTTOM) != 0 || currentPosition.siblingHeights != null && (currentPosition.flags & MessageObject.POSITION_FLAG_TOP) == 0))) {
@@ -3125,7 +3123,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         }
         if (messageChanged || dataChanged || groupChanged || pollChanged || widthChanged && messageObject.isPoll() || isPhotoDataChanged(messageObject) || pinnedBottom != bottomNear || pinnedTop != topNear) {
             wasPinned = isPinned;
-            wasForwardingRestricted = messageObject.isForwardRestricted();
+            wasForwardingRestricted = messageObject.isOwningChatForwardsRestricted();
             pinnedBottom = bottomNear;
             pinnedTop = topNear;
             currentMessageObject = messageObject;
