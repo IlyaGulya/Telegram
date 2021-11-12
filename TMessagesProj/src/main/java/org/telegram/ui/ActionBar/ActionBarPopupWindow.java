@@ -208,6 +208,11 @@ public class ActionBarPopupWindow extends PopupWindow {
                                 viewsToFix.get(a).getLayoutParams().width = Math.max(maxWidth, fixWidth);
                             }
                         }
+                    } else {
+                        backgroundsStartY.clear();
+                        backgroundsEndY.clear();
+                        backgroundsStartY.add(0);
+                        backgroundsEndY.add(MEASURED_BOTTOM);
                     }
                     super.onMeasure(widthMeasureSpec, heightMeasureSpec);
                 }
@@ -366,6 +371,7 @@ public class ActionBarPopupWindow extends PopupWindow {
         @Override
         protected void onDraw(Canvas canvas) {
             if (backgroundDrawable != null) {
+                backgroundDrawable.setAlpha(backAlpha);
                 if (backgroundsStartY.size() > 1) {
                     canvas.save();
                     canvas.clipRect(0, bgPaddings.top, getMeasuredWidth(), getMeasuredHeight());
@@ -378,22 +384,30 @@ public class ActionBarPopupWindow extends PopupWindow {
                     }
                     backgroundEndY += bgPaddings.top + bgPaddings.bottom;
 
-                    int start = backgroundStartY - scrollView.getScrollY();
-                    int end = backgroundEndY - scrollView.getScrollY();
+                    int top = backgroundStartY - scrollView.getScrollY();
+                    int bottom = backgroundEndY - scrollView.getScrollY();
 
-                    if (end < 0) continue;
+                    if (backgroundsStartY.size() == 1) {
+                        if (shownFromBotton) {
+                            top = top + (int) (bottom * (1 - backScaleY));
+                        } else {
+                            bottom = (int) (bottom * backScaleY);
+                        }
+                    }
+
+                    if (bottom < 0) continue;
                     
-                    if (start > getMeasuredHeight()) continue;
+                    if (top > getMeasuredHeight()) continue;
 
-                    if (start < 0) {
-                        start = 0;
+                    if (top < 0) {
+                        top = 0;
                     }
 
-                    if (end > getMeasuredHeight()) {
-                        end = getMeasuredHeight();
+                    if (bottom > getMeasuredHeight()) {
+                        bottom = getMeasuredHeight();
                     }
 
-                    backgroundDrawable.setBounds(0, start, getMeasuredWidth(), end);
+                    backgroundDrawable.setBounds(0, top, getMeasuredWidth(), bottom);
                     backgroundDrawable.draw(canvas);
                 }
                 if (backgroundsStartY.size() > 1) {
