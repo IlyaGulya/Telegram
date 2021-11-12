@@ -136,7 +136,7 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
                 }
             }
         }
-        isPrivate = !isForcePublic && TextUtils.isEmpty(currentChat.username);
+        isPrivate = !isForcePublic && ChatObject.isPrivate(currentChat);
         isChannel = ChatObject.isChannel(currentChat) && !currentChat.megagroup;
         if (isForcePublic && TextUtils.isEmpty(currentChat.username) || isPrivate && currentChat.creator) {
             TLRPC.TL_channels_checkUsername req = new TLRPC.TL_channels_checkUsername();

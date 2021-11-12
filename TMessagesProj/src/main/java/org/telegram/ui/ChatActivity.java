@@ -747,6 +747,8 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
         }
     };
 
+    private boolean wasForwardsRestricted;
+
     private boolean isPauseOnThemePreview;
     private ChatThemeBottomSheet chatThemeBottomSheet;
     private ThemeDelegate themeDelegate;
@@ -1374,6 +1376,8 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
             if (ChatObject.isChannel(currentChat)) {
                 getMessagesController().startShortPoll(currentChat, classGuid, false);
             }
+
+            this.wasForwardsRestricted = currentChat.noforwards;
         } else if (userId != 0) {
             currentUser = getMessagesController().getUser(userId);
             if (currentUser == null) {
@@ -14635,6 +14639,11 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 }
                 checkGroupCallJoin((Boolean) args[3]);
                 checkThemeEmoticon();
+                boolean isForwardsRestricted = getMessagesController().getChat(chatFull.id).noforwards;
+                if (wasForwardsRestricted != isForwardsRestricted) {
+                    chatAdapter.notifyDataSetChanged(true);
+                    wasForwardsRestricted = isForwardsRestricted;
+                }
                 if (pendingRequestsDelegate != null) {
                     pendingRequestsDelegate.setChatInfo(chatInfo, true);
                 }

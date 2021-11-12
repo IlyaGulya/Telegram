@@ -613,6 +613,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     public boolean hasDiscussion;
     public boolean isPinned;
     private boolean wasPinned;
+    private boolean wasForwardingRestricted;
     public long linkedChatId;
     public boolean isRepliesChat;
     public boolean isPinnedChat;
@@ -3070,7 +3071,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 currentMessageObject == messageObject && (isUserDataChanged() || photoNotSet) ||
                 lastPostAuthor != messageObject.messageOwner.post_author ||
                 wasPinned != isPinned ||
-                newReply != lastReplyMessage;
+                newReply != lastReplyMessage ||
+                wasForwardingRestricted != messageObject.isForwardRestricted();
         boolean groupChanged = groupedMessages != currentMessagesGroup;
         boolean pollChanged = false;
         if (drawCommentButton || drawSideButton == 3 && !((hasDiscussion && messageObject.isLinkedToChat(linkedChatId) || isRepliesChat) && (currentPosition == null || currentPosition.siblingHeights == null && (currentPosition.flags & MessageObject.POSITION_FLAG_BOTTOM) != 0 || currentPosition.siblingHeights != null && (currentPosition.flags & MessageObject.POSITION_FLAG_TOP) == 0))) {
@@ -3122,6 +3124,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         }
         if (messageChanged || dataChanged || groupChanged || pollChanged || widthChanged && messageObject.isPoll() || isPhotoDataChanged(messageObject) || pinnedBottom != bottomNear || pinnedTop != topNear) {
             wasPinned = isPinned;
+            wasForwardingRestricted = messageObject.isForwardRestricted();
             pinnedBottom = bottomNear;
             pinnedTop = topNear;
             currentMessageObject = messageObject;
@@ -14679,6 +14682,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         int animateForwardNameWidth;
         int lastForwardNameWidth;
 
+        private boolean lastDrawShareButton;
+
         public void recordDrawingState() {
             wasDraw = true;
             lastDrawingImageX = photoImage.getImageX();
@@ -14746,6 +14751,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             lastForwardNameX = forwardNameX;
             lastForwardedNamesOffset = namesOffset;
             lastForwardNameWidth = forwardedNameWidth;
+
+            lastDrawShareButton = getMessageObject().needDrawShareButton();
         }
 
         public void recordDrawingStatePreview() {
@@ -14934,6 +14941,13 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                     animateForwardNameX = lastForwardNameX;
                     animateForwardedNamesOffset = lastForwardedNamesOffset;
                     animateForwardNameWidth = lastForwardNameWidth;
+                    changed = true;
+                }
+            }
+
+            if (currentMessageObject != null) {
+                if (lastDrawShareButton != currentMessageObject.needDrawShareButton()) {
+                    animateBackgroundBoundsInner = true;
                     changed = true;
                 }
             }

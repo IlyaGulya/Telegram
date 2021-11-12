@@ -4189,6 +4189,8 @@ public class MessageObject {
     public boolean needDrawShareButton() {
         if (preview) {
             return false;
+        } else if (isForwardRestricted()) {
+            return false;
         } else if (scheduled) {
             return false;
         } else if (eventId != 0) {
@@ -4556,6 +4558,15 @@ public class MessageObject {
                     || messageOwner.fwd_from.saved_from_peer != null && messageOwner.fwd_from.saved_from_peer.user_id == selfUserId && (messageOwner.fwd_from.from_id == null || messageOwner.fwd_from.from_id.user_id == selfUserId);
         }
         return messageOwner.fwd_from.saved_from_peer == null || messageOwner.fwd_from.saved_from_peer.user_id == selfUserId;
+    }
+
+    public boolean isForwardRestricted() {
+        final TLRPC.Chat chat = getChat(null, null, getChatId());
+        if (chat == null || !ChatObject.isPrivate(chat)) {
+            return false;
+        }
+
+        return chat.noforwards;
     }
 
     public boolean needDrawAvatar() {
