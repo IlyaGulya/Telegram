@@ -73,6 +73,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -1970,6 +1971,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                     final LongSparseArray<TLRPC.Message> messagesByRandomIdsFinal = messagesByRandomIds;
                     boolean scheduledOnline = scheduleDate == 0x7FFFFFFE;
                     getConnectionsManager().sendRequest(req, (response, error) -> {
+                        boolean isForwardsRestrictedError = false;
                         if (error == null) {
                             SparseLongArray newMessagesByIds = new SparseLongArray();
                             TLRPC.Updates updates = (TLRPC.Updates) response;
@@ -2086,17 +2088,25 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                             }
                             getStatsController().incrementSentItemsCount(ApplicationLoader.getCurrentNetworkType(), StatsController.TYPE_MESSAGES, sentCount);
                         } else {
-                            AndroidUtilities.runOnUIThread(() -> AlertsCreator.processError(currentAccount, error, null, req));
+                            if (maybeProcessForwardsRestrictedError(msgObj, req, error)) {
+                                isForwardsRestrictedError = true;
+                            } else {
+                                AndroidUtilities.runOnUIThread(() -> AlertsCreator.processError(currentAccount, error, null, req));
+                            }
                         }
-                        for (int a1 = 0; a1 < newMsgObjArr.size(); a1++) {
-                            final TLRPC.Message newMsgObj1 = newMsgObjArr.get(a1);
-                            getMessagesStorage().markMessageAsSendError(newMsgObj1, scheduleDate != 0);
-                            AndroidUtilities.runOnUIThread(() -> {
-                                newMsgObj1.send_state = MessageObject.MESSAGE_SEND_STATE_SEND_ERROR;
-                                getNotificationCenter().postNotificationName(NotificationCenter.messageSendError, newMsgObj1.id);
-                                processSentMessage(newMsgObj1.id);
-                                removeFromSendingMessages(newMsgObj1.id, scheduleDate != 0);
-                            });
+                        if (isForwardsRestrictedError) {
+                            AndroidUtilities.runOnUIThread(() -> cancelSendingMessage(newMsgObj));
+                        } else {
+                            for (int a1 = 0; a1 < newMsgObjArr.size(); a1++) {
+                                final TLRPC.Message newMsgObj1 = newMsgObjArr.get(a1);
+                                getMessagesStorage().markMessageAsSendError(newMsgObj1, scheduleDate != 0);
+                                AndroidUtilities.runOnUIThread(() -> {
+                                    newMsgObj1.send_state = MessageObject.MESSAGE_SEND_STATE_SEND_ERROR;
+                                    getNotificationCenter().postNotificationName(NotificationCenter.messageSendError, newMsgObj1.id);
+                                    processSentMessage(newMsgObj1.id);
+                                    removeFromSendingMessages(newMsgObj1.id, scheduleDate != 0);
+                                });
+                            }
                         }
                     }, ConnectionsManager.RequestFlagCanCompress | ConnectionsManager.RequestFlagInvokeAfter);
 
@@ -5300,6 +5310,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
 
                     boolean currentSchedule = scheduled;
                     boolean isSentError = false;
+                    boolean isForwardsRestrictedError = false;
                     if (error == null) {
                         final int oldId = newMsgObj.id;
                         final ArrayList<TLRPC.Message> sentMessages = new ArrayList<>();
@@ -5469,10 +5480,16 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                             }
                         }
                     } else {
-                        AlertsCreator.processError(currentAccount, error, null, req);
-                        isSentError = true;
+                        if (maybeProcessForwardsRestrictedError(msgObj, req, error)) {
+                            isForwardsRestrictedError = true;
+                        } else {
+                            AlertsCreator.processError(currentAccount, error, null, req);
+                            isSentError = true;
+                        }
                     }
-                    if (isSentError) {
+                    if (isForwardsRestrictedError) {
+                        cancelSendingMessage(msgObj);
+                    } else if (isSentError) {
                         getMessagesStorage().markMessageAsSendError(newMsgObj, scheduled);
                         newMsgObj.send_state = MessageObject.MESSAGE_SEND_STATE_SEND_ERROR;
                         getNotificationCenter().postNotificationName(NotificationCenter.messageSendError, newMsgObj.id);
@@ -5494,6 +5511,27 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         if (parentMessage != null) {
             parentMessage.sendDelayedRequests();
         }
+    }
+
+    private boolean maybeProcessForwardsRestrictedError(MessageObject msgObj, TLObject req, TLRPC.TL_error error) {
+        if (req instanceof TLRPC.TL_messages_forwardMessages && error.text.equals("CHAT_FORWARDS_RESTRICTED")) {
+            final TLRPC.Peer from_peer = msgObj.messageOwner.peer_id;
+            long chatId = 0;
+            if (from_peer instanceof TLRPC.TL_peerChannel) {
+                chatId = from_peer.channel_id;
+            } else if (from_peer instanceof TLRPC.TL_peerChat) {
+                chatId = from_peer.chat_id;
+            }
+            if (chatId != 0) {
+                long finalChatId = chatId;
+                AndroidUtilities.runOnUIThread(() -> {
+                    AlertsCreator.processError(currentAccount, error, null, req, msgObj.messageOwner.peer_id);
+                    getMessagesController().loadFullChat(finalChatId, 0, true);
+                }, 0);
+            }
+            return true;
+        }
+        return false;
     }
 
     private void updateMediaPaths(MessageObject newMsgObj, TLRPC.Message sentMessage, int newMsgId, String originalPath, boolean post) {
