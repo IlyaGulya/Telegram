@@ -431,6 +431,8 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
             if (chatFull.id == chatId) {
                 info = chatFull;
                 invite = chatFull.exported_invite;
+                currentChat = getMessagesController().getChat(chatId);
+                isRestrictSavingContent = currentChat.noforwards;
                 updatePrivatePublic();
             }
         }
