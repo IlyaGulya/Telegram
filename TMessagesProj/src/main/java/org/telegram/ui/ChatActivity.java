@@ -1982,7 +1982,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                     }
                 } else if (id == copy) {
                     if (isForwardsRestricted()) {
-                        // TODO: maybe show another message rather than "can't forward" when trying to save media?
+                        // TODO(ilyagulya): maybe show another message rather than "can't forward" when trying to save media?
                         showForwardRestrictedHint(actionBar.findViewWithTag(copy), true);
                         return;
                     }
@@ -2022,7 +2022,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                     openForward(actionBar.findViewWithTag(forward), true);
                 } else if (id == save_to) {
                     if (isForwardsRestricted()) {
-                        // TODO: maybe show another message rather than "can't forward" when trying to save media?
+                        // TODO(ilyagulya): maybe show another message rather than "can't forward" when trying to save media?
                         showForwardRestrictedHint(actionBar.findViewWithTag(save_to), true);
                         return;
                     }
@@ -12580,7 +12580,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
         }
     }
 
-    // TODO: Use Map<String, AnimatorSet> for storing items animations and make common animator.
+    // TODO(ilyagulya): Use Map<String, AnimatorSet> for storing items animations and make common animator.
     private void updateCopyButtonState(boolean shouldAnimate) {
         ActionBarMenuItem copyItem = actionBar.createActionMode().getItem(copy);
 
@@ -19539,7 +19539,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
         return caption;
     }
 
-    // TODO: recreate or update opened menu on Chat.noforwards change
+    // TODO(ilyagulya): recreate or update opened menu on Chat.noforwards change
     private void createMenu(View v, boolean single, boolean listView, float x, float y, boolean searchGroup) {
         if (actionBar.isActionModeShowed() || reportType >= 0) {
             return;

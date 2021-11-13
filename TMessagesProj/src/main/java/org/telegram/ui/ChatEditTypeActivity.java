@@ -448,7 +448,7 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
     }
 
     private void processDone() {
-        // TODO: Show loader!
+        // TODO(ilyagulya): Show loader!
         if (trySetUsername() && tryToggleNoforwards()) {
             finishFragment();
         }
@@ -510,7 +510,7 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
                     processDone();
             }, (req, error) -> {
                 togglingNoforwards = false;
-                // TODO: handle errors
+                // TODO(ilyagulya): handle errors
                 AlertsCreator.processError(currentAccount, error, ChatEditTypeActivity.this, req);
             });
             return false;

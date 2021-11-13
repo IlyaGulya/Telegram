@@ -3061,7 +3061,6 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     }
 
     private void setMessageContent(MessageObject messageObject, MessageObject.GroupedMessages groupedMessages, boolean bottomNear, boolean topNear) {
-        // TODO: Animate side button hiding/showing shen noforwards flag changes
         if (messageObject.checkLayout() || currentPosition != null && lastHeight != AndroidUtilities.displaySize.y) {
             currentMessageObject = null;
         }
@@ -10226,7 +10225,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     @SuppressLint("WrongCall")
     @Override
     protected void onDraw(Canvas canvas) {
-        // TODO: Check why onDraw is called continuously
+        // TODO(ilyagulya): Check why onDraw is called continuously
         if (currentMessageObject == null) {
             return;
         }
@@ -10397,7 +10396,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                     drawCommentButton(canvas, 1f);
                 }
             } else {
-                // TODO: Fix button background animation
+                // TODO(ilyagulya): Fix button background animation
 
                 float targetAnimationAlpha = this.transitionParams.animateChangeProgress;
                 if (this.sideButtonType == SideButtonType.NONE) {
@@ -10460,7 +10459,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
 
                     drawable.draw(canvas);
 
-                    // TODO: seems like a hack. Drawable mutation did not work for some reason.
+                    // TODO(ilyagulya): seems like a hack. Drawable mutation did not work for some reason.
                     drawable.setAlpha(originalDrawableAlpha);
                 }
             }
@@ -14755,7 +14754,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
 
         @SideButtonType
         private int lastSideButtonType;
-        // TODO: Support animation for all side buttons
+        // TODO(ilyagulya): Support animation for all side buttons
         private boolean animateShareButton;
 
         public void recordDrawingState() {

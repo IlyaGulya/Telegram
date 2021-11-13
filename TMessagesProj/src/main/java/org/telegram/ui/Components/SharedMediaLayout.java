@@ -3020,7 +3020,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
         final TLRPC.Chat chat = delegate.getCurrentChat();
         if (chat != null) {
             if (forwardsRestrictedHint == null) {
-                // TODO: remove cast to FrameLayout
+                // TODO(ilyagulya) : remove cast to FrameLayout
                 forwardsRestrictedHint = Hints.addForwardRestrictedHintTo((FrameLayout) parentFragment.getFragmentView(), null, false, chat);
             }
             forwardsRestrictedHint.showForView(forwardItem.getContentView(), true);

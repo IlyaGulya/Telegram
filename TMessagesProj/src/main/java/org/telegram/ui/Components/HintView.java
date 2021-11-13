@@ -82,7 +82,7 @@ public class HintView extends FrameLayout {
         } else if (type == 4) {
             textView.setMaxWidth(AndroidUtilities.dp(280));
         } else if (type == TYPE_FORWARD_BUTTON_BOTTOM || type == TYPE_FORWARD_BUTTON_TOP) {
-            // TODO: get max width from screen size
+            // TODO(ilyagulya): get max width from screen size
             textView.setMaxWidth(AndroidUtilities.dp(310));
         } else {
             textView.setMaxWidth(AndroidUtilities.dp(250));
