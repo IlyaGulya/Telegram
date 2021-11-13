@@ -14790,11 +14790,14 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                     updateForwardButtonsStates(true);
                     updateCopyButtonState(true);
                     updateSaveButtonState(true);
-                    chatAdapter.notifyDataSetChanged(true);
+                    if (chatAdapter != null) {
+                        chatAdapter.notifyDataSetChanged(true);
+                    }
                     if (isForwardsRestricted && this.visibleShareAlert != null) {
                         this.visibleShareAlert.dismiss();
                         this.visibleShareAlert = null;
                     }
+                    updateVisibleRows();
                 }
                 if (pendingRequestsDelegate != null) {
                     pendingRequestsDelegate.setChatInfo(chatInfo, true);

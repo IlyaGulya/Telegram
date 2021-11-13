@@ -15023,7 +15023,6 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 final boolean shareButtonGone = lastSideButtonType == SideButtonType.SHARE && sideButtonType == SideButtonType.NONE;
                 final boolean shareButtonAppeared = lastSideButtonType == SideButtonType.NONE && sideButtonType == SideButtonType.SHARE;
                 if (shareButtonGone || shareButtonAppeared) {
-                    animateBackgroundBoundsInner = true;
                     animateShareButton = true;
                     changed = true;
                 }
