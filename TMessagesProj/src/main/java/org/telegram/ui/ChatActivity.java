@@ -20389,6 +20389,8 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
             ActionBarMenuSubItem forwardsRestrictedView = null;
 
             if (selectedObject.isOwningChatForwardsRestricted()) {
+                scrimPopupWindowItems = Arrays.copyOf(scrimPopupWindowItems, scrimPopupWindowItems.length + 1);
+
                 ActionBarMenuSubItem cell = new ActionBarMenuSubItem(getParentActivity(), true, true, themeDelegate);
                 if (ChatObject.isChannel(this.currentChat)) {
                     cell.setText(LocaleController.getString("ChannelForwardsRestrictedMessageInfo", R.string.ChannelForwardsRestrictedMessageInfo));
@@ -20398,6 +20400,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 cell.setItemHeight(56);
                 cell.setTag(R.id.width_tag, 240);
                 cell.setMultiline();
+                scrimPopupWindowItems[scrimPopupWindowItems.length - 1] = cell;
                 forwardsRestrictedView = cell;
 
                 Drawable shadowDrawable2 = ContextCompat.getDrawable(contentView.getContext(), R.drawable.popup_fixed_alert).mutate();
