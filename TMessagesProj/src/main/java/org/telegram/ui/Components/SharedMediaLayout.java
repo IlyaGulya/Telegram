@@ -1096,6 +1096,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
         if (info != null) {
             mergeDialogId = -info.migrated_from_chat_id;
         }
+        updateForwardsRestriction();
         dialog_id = did;
         for (int a = 0; a < sharedMediaData.length; a++) {
             sharedMediaData[a] = new SharedMediaData();
