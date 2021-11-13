@@ -20073,34 +20073,6 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 });
             }
 
-            if (selectedObject.isOwningChatForwardsRestricted()) {
-                scrimPopupWindowItems = Arrays.copyOf(scrimPopupWindowItems, scrimPopupWindowItems.length + 1);
-
-                View gap = new View(getParentActivity());
-                gap.setTag(1000);
-                gap.setTag(R.id.object_tag, 1);
-                popupLayout.addView(gap);
-                LinearLayout.LayoutParams layoutParams = LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8);
-                if (LocaleController.isRTL) {
-                    layoutParams.gravity = Gravity.RIGHT;
-                }
-                gap.setLayoutParams(layoutParams);
-
-
-
-                ActionBarMenuSubItem cell = new ActionBarMenuSubItem(getParentActivity(), true, true, themeDelegate);
-                if (ChatObject.isChannel(this.currentChat)) {
-                    cell.setText(LocaleController.getString("ChannelForwardsRestrictedMessageInfo", R.string.ChannelForwardsRestrictedMessageInfo));
-                } else {
-                    cell.setText(LocaleController.getString("GroupForwardsRestrictedMessageInfo", R.string.GroupForwardsRestrictedMessageInfo));
-                }
-                cell.setItemHeight(56);
-                cell.setTag(R.id.width_tag, 240);
-                cell.setMultiline();
-                scrimPopupWindowItems[scrimPopupWindowItems.length - 1] = cell;
-                popupLayout.addView(cell);
-            }
-
             LinearLayout scrimPopupContainerLayout = new LinearLayout(contentView.getContext()) {
                 @Override
                 public boolean dispatchKeyEvent(KeyEvent event) {
@@ -20136,9 +20108,13 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
             scrimPopupContainerLayout.setOrientation(LinearLayout.VERTICAL);
             boolean showMessageSeen = currentChat != null && message.isOutOwner() && message.isSent() && !message.isEditing() && !message.isSending() && !message.isSendError() && !message.isContentUnread() && !message.isUnread() && (ConnectionsManager.getInstance(currentAccount).getCurrentTime() - message.messageOwner.date < 7 * 86400)  && (ChatObject.isMegagroup(currentChat) || !ChatObject.isChannel(currentChat)) && chatInfo != null && chatInfo.participants_count < 50 && !(message.messageOwner.action instanceof TLRPC.TL_messageActionChatJoinedByRequest);
             MessageSeenView messageSeenView = null;
-            // TODO: fix popup menu when message seen is shown
             if (showMessageSeen) {
                 messageSeenView = new MessageSeenView(contentView.getContext(), currentAccount, message, currentChat);
+                Drawable shadowDrawable2 = ContextCompat.getDrawable(contentView.getContext(), R.drawable.popup_fixed_alert).mutate();
+                shadowDrawable2.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_actionBarDefaultSubmenuBackground), PorterDuff.Mode.MULTIPLY));
+                FrameLayout messageSeenLayout = new FrameLayout(contentView.getContext());
+                messageSeenLayout.addView(messageSeenView);
+                messageSeenLayout.setBackground(shadowDrawable2);
                 MessageSeenView finalMessageSeenView = messageSeenView;
                 messageSeenView.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -20300,18 +20276,41 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                     }
                 });
 
-                View gap = new View(getParentActivity());
-                gap.setTag(R.id.object_tag, 1);
-                popupLayout.addView(gap);
-                LinearLayout.LayoutParams layoutParams = LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8);
-                if (LocaleController.isRTL) {
-                    layoutParams.gravity = Gravity.RIGHT;
-                }
-                gap.setLayoutParams(layoutParams);
-
-                popupLayout.addView(messageSeenView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 60));
+                scrimPopupContainerLayout.addView(messageSeenLayout, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 60));
             }
-            scrimPopupContainerLayout.addView(popupLayout, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, showMessageSeen ? -8 : 0, 0, 0));
+            int topMargin = 0;
+            if (showMessageSeen) {
+                topMargin -= 8;
+            }
+            int bottomMargin = 0;
+            if (selectedObject.isOwningChatForwardsRestricted()) {
+                bottomMargin -= 8;
+            }
+            scrimPopupContainerLayout.addView(popupLayout, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, topMargin, 0, bottomMargin));
+
+            ActionBarMenuSubItem forwardsRestrictedView = null;
+
+            if (selectedObject.isOwningChatForwardsRestricted()) {
+                ActionBarMenuSubItem cell = new ActionBarMenuSubItem(getParentActivity(), true, true, themeDelegate);
+                if (ChatObject.isChannel(this.currentChat)) {
+                    cell.setText(LocaleController.getString("ChannelForwardsRestrictedMessageInfo", R.string.ChannelForwardsRestrictedMessageInfo));
+                } else {
+                    cell.setText(LocaleController.getString("GroupForwardsRestrictedMessageInfo", R.string.GroupForwardsRestrictedMessageInfo));
+                }
+                cell.setItemHeight(56);
+                cell.setTag(R.id.width_tag, 240);
+                cell.setMultiline();
+                forwardsRestrictedView = cell;
+
+                Drawable shadowDrawable2 = ContextCompat.getDrawable(contentView.getContext(), R.drawable.popup_fixed_alert).mutate();
+                shadowDrawable2.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_actionBarDefaultSubmenuBackground), PorterDuff.Mode.MULTIPLY));
+                FrameLayout forwardsRestrictedLayout = new FrameLayout(contentView.getContext());
+                forwardsRestrictedLayout.addView(cell);
+                forwardsRestrictedLayout.setBackground(shadowDrawable2);
+
+                scrimPopupContainerLayout.addView(forwardsRestrictedLayout);
+            }
+
             scrimPopupWindow = new ActionBarPopupWindow(scrimPopupContainerLayout, LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT) {
                 @Override
                 public void dismiss() {
@@ -20373,6 +20372,9 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
 
             if (messageSeenView != null) {
                 messageSeenView.getLayoutParams().width = scrimPopupContainerLayout.getMeasuredWidth() - AndroidUtilities.dp(16);
+            }
+            if (forwardsRestrictedView != null) {
+                forwardsRestrictedView.getLayoutParams().width = scrimPopupContainerLayout.getMeasuredWidth() - AndroidUtilities.dp(16);
             }
             int popupX = v.getLeft() + (int) x - scrimPopupContainerLayout.getMeasuredWidth() + backgroundPaddings.left - AndroidUtilities.dp(28);
             if (popupX < AndroidUtilities.dp(6)) {
