@@ -756,6 +756,8 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
     private ThemeDelegate themeDelegate;
     private ChatActivityMemberRequestsDelegate pendingRequestsDelegate;
 
+    private ShareAlert visibleShareAlert;
+
     private final static int[] allowedNotificationsDuringChatListAnimations = new int[]{
             NotificationCenter.messagesRead,
             NotificationCenter.threadMessagesRead,
@@ -14698,6 +14700,10 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                     this.isForwardsRestricted = isForwardsRestricted;
                     updateForwardButtonsStates(true);
                     chatAdapter.notifyDataSetChanged(true);
+                    if (isForwardsRestricted && this.visibleShareAlert != null) {
+                        this.visibleShareAlert.dismiss();
+                        this.visibleShareAlert = null;
+                    }
                 }
                 if (pendingRequestsDelegate != null) {
                     pendingRequestsDelegate.setChatInfo(chatInfo, true);
@@ -22757,10 +22763,11 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                                 arrayList = new ArrayList<>();
                                 arrayList.add(messageObject);
                             }
-                            showDialog(new ShareAlert(mContext, ChatActivity.this, arrayList, null, null, ChatObject.isChannel(currentChat), null, null, false, false, themeDelegate) {
+                            final ShareAlert dialog = new ShareAlert(mContext, ChatActivity.this, arrayList, null, null, ChatObject.isChannel(currentChat), null, null, false, false, themeDelegate) {
                                 @Override
                                 public void dismissInternal() {
                                     super.dismissInternal();
+                                    visibleShareAlert = null;
                                     AndroidUtilities.requestAdjustResize(getParentActivity(), classGuid);
                                     if (chatActivityEnterView.getVisibility() == View.VISIBLE) {
                                         fragmentView.requestLayout();
@@ -22775,7 +22782,9 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                                         undoView.showWithAction(0, UndoView.ACTION_FWD_MESSAGES, count, dids.size(), null, null);
                                     }
                                 }
-                            });
+                            };
+                            visibleShareAlert = dialog;
+                            showDialog(dialog);
                             AndroidUtilities.setAdjustResizeToNothing(getParentActivity(), classGuid);
                             fragmentView.requestLayout();
                         }
