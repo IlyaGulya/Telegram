@@ -15,6 +15,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.LocaleController;
@@ -50,7 +52,7 @@ public class HintView extends FrameLayout {
 
     private int bottomOffset;
     private long showingDuration = 2000;
-    private final Theme.ResourcesProvider resourcesProvider;
+    @Nullable private final Theme.ResourcesProvider resourcesProvider;
 
     public HintView(Context context, int type) {
         this(context, type, false, null);
@@ -64,7 +66,7 @@ public class HintView extends FrameLayout {
         this(context, type, false, resourcesProvider);
     }
 
-    public HintView(Context context, int type, boolean topArrow, Theme.ResourcesProvider resourcesProvider) {
+    public HintView(Context context, int type, boolean topArrow, @Nullable Theme.ResourcesProvider resourcesProvider) {
         super(context);
         this.resourcesProvider = resourcesProvider;
 

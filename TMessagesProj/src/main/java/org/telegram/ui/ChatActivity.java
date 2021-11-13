@@ -201,6 +201,7 @@ import org.telegram.ui.Components.FragmentContextView;
 import org.telegram.ui.Components.GigagroupConvertAlert;
 import org.telegram.ui.Components.HideViewAfterAnimation;
 import org.telegram.ui.Components.HintView;
+import org.telegram.ui.Components.Hints;
 import org.telegram.ui.Components.ImportingAlert;
 import org.telegram.ui.Components.InstantCameraView;
 import org.telegram.ui.Components.InviteMembersBottomSheet;
@@ -9580,19 +9581,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
 
     private HintView createForwardRestrictedHintFor(boolean actionBar) {
         SizeNotifierFrameLayout frameLayout = (SizeNotifierFrameLayout) fragmentView;
-        HintView hint = new HintView(getParentActivity(), actionBar ? HintView.TYPE_FORWARD_BUTTON_TOP : HintView.TYPE_FORWARD_BUTTON_BOTTOM, actionBar, themeDelegate);
-        frameLayout.addView(hint, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP, 19, 0, 19, 0));
-        hint.setAlpha(0.0f);
-        hint.setVisibility(View.INVISIBLE);
-        hint.setTextPaddings(AndroidUtilities.dp(7), AndroidUtilities.dp(11));
-        hint.setTextMaxWidth(frameLayout.getWidth() - AndroidUtilities.dp(11) - AndroidUtilities.dp(17));
-        if (ChatObject.isChannel(this.currentChat)) {
-            hint.setText(LocaleController.getString("ForwardsFromChannelRestricted", R.string.ForwardsFromChannelRestricted));
-        } else {
-            hint.setText(LocaleController.getString("ForwardsFromGroupRestricted", R.string.ForwardsFromGroupRestricted));
-        }
-
-        return hint;
+        return Hints.addForwardRestrictedHintTo(frameLayout, themeDelegate, actionBar, this.currentChat);
     }
 
 
