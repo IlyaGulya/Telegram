@@ -59,6 +59,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
+
 import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
@@ -115,8 +117,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
-
-import androidx.annotation.RequiresApi;
 
 public class AlertsCreator {
 
@@ -233,6 +233,18 @@ public class AlertsCreator {
                     break;
                 case "SCHEDULE_TOO_MUCH":
                     showSimpleToast(fragment, LocaleController.getString("MessageScheduledLimitReached", R.string.MessageScheduledLimitReached));
+                    break;
+                case "CHAT_FORWARDS_RESTRICTED":
+                    if (request instanceof TLRPC.TL_messages_forwardMessages) {
+                        final TLRPC.Peer peer = (TLRPC.Peer) args[0];
+                        if (peer != null) {
+                            if (peer instanceof TLRPC.TL_peerChannel) {
+                                showSimpleToast(fragment, LocaleController.getString("ChannelForwardsRestrictedMessageInfo", R.string.ChannelForwardsRestrictedMessageInfo));
+                            } else if (peer instanceof TLRPC.TL_peerChat) {
+                                showSimpleToast(fragment, LocaleController.getString("GroupForwardsRestrictedMessageInfo", R.string.GroupForwardsRestrictedMessageInfo));
+                            }
+                        }
+                    }
                     break;
             }
         } else if (request instanceof TLRPC.TL_messages_importChatInvite) {

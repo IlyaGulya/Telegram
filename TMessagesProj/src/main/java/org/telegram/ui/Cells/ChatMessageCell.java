@@ -50,6 +50,7 @@ import android.text.TextUtils;
 import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
 import android.text.style.URLSpan;
+import android.util.Log;
 import android.util.Property;
 import android.util.SparseArray;
 import android.util.StateSet;
@@ -66,9 +67,9 @@ import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.animation.Interpolator;
 import android.widget.Toast;
 
+import androidx.annotation.IntDef;
 import androidx.core.graphics.ColorUtils;
-
-import com.google.android.exoplayer2.util.Log;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 import org.telegram.PhoneFormat.PhoneFormat;
 import org.telegram.messenger.AndroidUtilities;
@@ -140,6 +141,8 @@ import org.telegram.ui.PinchToZoomHelper;
 import org.telegram.ui.SecretMediaViewer;
 
 import java.io.File;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -613,6 +616,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     public boolean hasDiscussion;
     public boolean isPinned;
     private boolean wasPinned;
+    private boolean wasForwardingRestricted;
     public long linkedChatId;
     public boolean isRepliesChat;
     public boolean isPinnedChat;
@@ -697,7 +701,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     private boolean replyPressed;
     private TLRPC.PhotoSize currentReplyPhoto;
 
-    private int drawSideButton;
+    @SideButtonType
+    private int sideButtonType;
     private boolean sideButtonPressed;
     private float sideStartX;
     private float sideStartY;
@@ -2185,7 +2190,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                     } else if (drawNameLayout && nameLayout != null && viaWidth != 0 && x >= nameX + viaNameWidth && x <= nameX + viaNameWidth + viaWidth && y >= nameY - AndroidUtilities.dp(4) && y <= nameY + AndroidUtilities.dp(20)) {
                         forwardBotPressed = true;
                         result = true;
-                    } else if (drawSideButton != 0 && x >= sideStartX && x <= sideStartX + AndroidUtilities.dp(40) && y >= sideStartY && y <= sideStartY + AndroidUtilities.dp(32 + (drawSideButton == 3 && commentLayout != null ? 18 : 0))) {
+                    } else if (hasSideButton() && x >= sideStartX && x <= sideStartX + AndroidUtilities.dp(40) && y >= sideStartY && y <= sideStartY + AndroidUtilities.dp(32 + (sideButtonType == 3 && commentLayout != null ? 18 : 0))) {
                         if (currentMessageObject.isSent()) {
                             sideButtonPressed = true;
                         }
@@ -2332,7 +2337,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                         sideButtonPressed = false;
                         playSoundEffect(SoundEffectConstants.CLICK);
                         if (delegate != null) {
-                            if (drawSideButton == 3) {
+                            if (sideButtonType == SideButtonType.COMMENT) {
                                 delegate.didPressCommentButton(this);
                             } else {
                                 delegate.didPressSideButton(this);
@@ -2341,7 +2346,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                     } else if (event.getAction() == MotionEvent.ACTION_CANCEL) {
                         sideButtonPressed = false;
                     } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                        if (!(x >= sideStartX && x <= sideStartX + AndroidUtilities.dp(40) && y >= sideStartY && y <= sideStartY + AndroidUtilities.dp(32 + (drawSideButton == 3 && commentLayout != null ? 18 : 0)))) {
+                        if (!(x >= sideStartX && x <= sideStartX + AndroidUtilities.dp(40) && y >= sideStartY && y <= sideStartY + AndroidUtilities.dp(32 + (sideButtonType == SideButtonType.COMMENT && commentLayout != null ? 18 : 0)))) {
                             sideButtonPressed = false;
                         }
                     }
@@ -2576,7 +2581,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         parentHeight = parentH;
         backgroundHeight = parentH;
 
-        if (currentMessageObject != null && (hasGradientService() && currentMessageObject.shouldDrawWithoutBackground() || drawSideButton != 0 || !botButtons.isEmpty()) || currentBackgroundDrawable != null && currentBackgroundDrawable.getGradientShader() != null) {
+        if (currentMessageObject != null && (hasGradientService() && currentMessageObject.shouldDrawWithoutBackground() || hasSideButton() || !botButtons.isEmpty()) || currentBackgroundDrawable != null && currentBackgroundDrawable.getGradientShader() != null) {
             invalidate();
         }
     }
@@ -2590,7 +2595,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             this.parentViewTopOffset = parentOffset;
             parentHeight = parent;
         }
-        if (currentMessageObject != null && (hasGradientService() && currentMessageObject.shouldDrawWithoutBackground() || drawSideButton != 0 || !botButtons.isEmpty()) ) {
+        if (currentMessageObject != null && (hasGradientService() && currentMessageObject.shouldDrawWithoutBackground() || hasSideButton() || !botButtons.isEmpty()) ) {
             invalidate();
         }
 
@@ -3070,10 +3075,11 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 currentMessageObject == messageObject && (isUserDataChanged() || photoNotSet) ||
                 lastPostAuthor != messageObject.messageOwner.post_author ||
                 wasPinned != isPinned ||
-                newReply != lastReplyMessage;
+                newReply != lastReplyMessage ||
+                wasForwardingRestricted != messageObject.isOwningChatForwardsRestricted();
         boolean groupChanged = groupedMessages != currentMessagesGroup;
         boolean pollChanged = false;
-        if (drawCommentButton || drawSideButton == 3 && !((hasDiscussion && messageObject.isLinkedToChat(linkedChatId) || isRepliesChat) && (currentPosition == null || currentPosition.siblingHeights == null && (currentPosition.flags & MessageObject.POSITION_FLAG_BOTTOM) != 0 || currentPosition.siblingHeights != null && (currentPosition.flags & MessageObject.POSITION_FLAG_TOP) == 0))) {
+        if (drawCommentButton || sideButtonType == SideButtonType.COMMENT && !((hasDiscussion && messageObject.isLinkedToChat(linkedChatId) || isRepliesChat) && (currentPosition == null || currentPosition.siblingHeights == null && (currentPosition.flags & MessageObject.POSITION_FLAG_BOTTOM) != 0 || currentPosition.siblingHeights != null && (currentPosition.flags & MessageObject.POSITION_FLAG_TOP) == 0))) {
             dataChanged = true;
         }
         if (!messageChanged && messageObject.isDice()) {
@@ -3122,6 +3128,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         }
         if (messageChanged || dataChanged || groupChanged || pollChanged || widthChanged && messageObject.isPoll() || isPhotoDataChanged(messageObject) || pinnedBottom != bottomNear || pinnedTop != topNear) {
             wasPinned = isPinned;
+            wasForwardingRestricted = messageObject.isOwningChatForwardsRestricted();
             pinnedBottom = bottomNear;
             pinnedTop = topNear;
             currentMessageObject = messageObject;
@@ -3169,9 +3176,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             drawVideoSize = false;
             canStreamVideo = false;
             animatingNoSound = 0;
-            drawSideButton = !isRepliesChat && checkNeedDrawShareButton(messageObject) && (currentPosition == null || currentPosition.last) ? 1 : 0;
-            if (isPinnedChat || drawSideButton == 1 && messageObject.messageOwner.fwd_from != null && !messageObject.isOutOwner() && messageObject.messageOwner.fwd_from.saved_from_peer != null && messageObject.getDialogId() == UserConfig.getInstance(currentAccount).getClientUserId()) {
-                drawSideButton = 2;
+            sideButtonType = !isRepliesChat && checkNeedDrawShareButton(messageObject) && (currentPosition == null || currentPosition.last) ? SideButtonType.SHARE : SideButtonType.NONE;
+            if (isPinnedChat || sideButtonType == SideButtonType.SHARE && messageObject.messageOwner.fwd_from != null && !messageObject.isOutOwner() && messageObject.messageOwner.fwd_from.saved_from_peer != null && messageObject.getDialogId() == UserConfig.getInstance(currentAccount).getClientUserId()) {
+                sideButtonType = SideButtonType.GO;
             }
             replyNameLayout = null;
             adminLayout = null;
@@ -3394,7 +3401,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                         commentLayout = null;
                     }
                     drawCommentNumber = false;
-                    drawSideButton = isRepliesChat ? 2 : 3;
+                    sideButtonType = isRepliesChat ? SideButtonType.GO : SideButtonType.COMMENT;
                 }
             } else {
                 commentLayout = null;
@@ -3597,7 +3604,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 maxChildWidth = Math.max(maxChildWidth, forwardedNameWidth);
                 maxChildWidth = Math.max(maxChildWidth, replyNameWidth);
                 maxChildWidth = Math.max(maxChildWidth, replyTextWidth);
-                if (commentLayout != null && drawSideButton != 3) {
+                if (commentLayout != null && sideButtonType != SideButtonType.COMMENT) {
                     maxChildWidth = Math.max(maxChildWidth, totalCommentWidth);
                 }
                 int maxWebWidth = 0;
@@ -3617,7 +3624,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                             linkPreviewMaxWidth = getParentWidth() - AndroidUtilities.dp(80);
                         }
                     }
-                    if (drawSideButton != 0) {
+                    if (hasSideButton()) {
                         linkPreviewMaxWidth -= AndroidUtilities.dp(20);
                     }
                     String site_name;
@@ -5282,7 +5289,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                             w = infoWidth + AndroidUtilities.dp(16 + 24);
                         }
                     }
-                    if (commentLayout != null && drawSideButton != 3 && w < totalCommentWidth + AndroidUtilities.dp(10)) {
+                    if (commentLayout != null && sideButtonType != SideButtonType.COMMENT && w < totalCommentWidth + AndroidUtilities.dp(10)) {
                         w = totalCommentWidth + AndroidUtilities.dp(10);
                     }
 
@@ -8445,13 +8452,13 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         } else if (hasOldCaptionPreview) {
             captionX = backgroundDrawableLeft + AndroidUtilities.dp(currentMessageObject.isOutOwner() ? 11 : 17) + captionOffsetX;
             captionY = totalHeight - captionHeight - AndroidUtilities.dp(drawPinnedTop ? 9 : 10) - linkPreviewHeight - AndroidUtilities.dp(17);
-            if (drawCommentButton && drawSideButton != 3) {
+            if (drawCommentButton && sideButtonType != SideButtonType.COMMENT) {
                 captionY -= AndroidUtilities.dp(shouldDrawTimeOnMedia() ? 41.3f : 43);
             }
         } else {
             captionX = backgroundDrawableLeft + AndroidUtilities.dp(currentMessageObject.isOutOwner() || mediaBackground || drawPinnedBottom ? 11 : 17) + captionOffsetX;
             captionY = totalHeight - captionHeight - AndroidUtilities.dp(drawPinnedTop ? 9 : 10);
-            if (drawCommentButton && drawSideButton != 3) {
+            if (drawCommentButton && sideButtonType != SideButtonType.COMMENT) {
                 captionY -= AndroidUtilities.dp(shouldDrawTimeOnMedia() ? 41.3f : 43);
             }
         }
@@ -10211,9 +10218,14 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         }
     }
 
+    private boolean hasSideButton() {
+        return sideButtonType != SideButtonType.NONE;
+    }
+
     @SuppressLint("WrongCall")
     @Override
     protected void onDraw(Canvas canvas) {
+        // TODO(ilyagulya): Check why onDraw is called continuously
         if (currentMessageObject == null) {
             return;
         }
@@ -10307,7 +10319,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 right = currentBackgroundDrawable.getBounds().right;
             }
 
-            if (drawSideButton != 0) {
+            if (hasSideButton()) {
                 if (currentMessageObject.isOutOwner()) {
                     left -= AndroidUtilities.dp(8 + 32);
                 } else {
@@ -10347,7 +10359,12 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             }
         }
 
-        if (drawSideButton != 0) {
+        int sideButtonType = this.sideButtonType;
+        if (sideButtonType == SideButtonType.NONE && transitionParams.animateShareButton && transitionParams.inProgress()) {
+            sideButtonType = SideButtonType.SHARE;
+        }
+
+        if (sideButtonType != SideButtonType.NONE) {
             if (currentMessageObject.isOutOwner()) {
                 sideStartX = getCurrentBackgroundLeft() - AndroidUtilities.dp(8 + 32);
                 if (currentMessagesGroup != null) {
@@ -10374,19 +10391,50 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 }
                 sideStartX -= offsetX;
             }
-            if (drawSideButton == 3) {
+            if (sideButtonType == SideButtonType.COMMENT) {
                 if (!(enterTransitionInPorgress && !currentMessageObject.isVoice())) {
                     drawCommentButton(canvas, 1f);
                 }
             } else {
+                // TODO(ilyagulya): Fix button background animation
+
+                float targetAnimationAlpha = this.transitionParams.animateChangeProgress;
+                if (this.sideButtonType == SideButtonType.NONE) {
+                    targetAnimationAlpha = 1 - targetAnimationAlpha;
+                }
+                Log.d("ChatMessageCell", "targetAnimationAlpha:" + targetAnimationAlpha);
+
                 rect.set(sideStartX, sideStartY, sideStartX + AndroidUtilities.dp(32), sideStartY + AndroidUtilities.dp(32));
                 applyServiceShaderMatrix(getMeasuredWidth(), backgroundHeight, getX(), viewTop);
-                canvas.drawRoundRect(rect, AndroidUtilities.dp(16), AndroidUtilities.dp(16), getThemedPaint(sideButtonPressed ? Theme.key_paint_chatActionBackgroundSelected : Theme.key_paint_chatActionBackground));
-                if (hasGradientService()) {
-                    canvas.drawRoundRect(rect, AndroidUtilities.dp(16), AndroidUtilities.dp(16), Theme.chat_actionBackgroundGradientDarkenPaint);
+                final Paint themedPaint = getThemedPaint(sideButtonPressed ? Theme.key_paint_chatActionBackgroundSelected : Theme.key_paint_chatActionBackground);
+                final int originalAlpha = themedPaint.getAlpha();
+
+                if (transitionParams.animateShareButton) {
+                    final int targetPaintAlpha = (int) (originalAlpha * targetAnimationAlpha);
+                    themedPaint.setAlpha(targetPaintAlpha);
+                    Log.d("ChatMessageCell", "originalAlpha: " + originalAlpha + ", targetPaintAlpha: " + targetPaintAlpha);
                 }
 
-                if (drawSideButton == 2) {
+                canvas.drawRoundRect(rect, AndroidUtilities.dp(16), AndroidUtilities.dp(16), themedPaint);
+
+                themedPaint.setAlpha(originalAlpha);
+
+                if (hasGradientService()) {
+                    final Paint gradientPaint = Theme.chat_actionBackgroundGradientDarkenPaint;
+                    final int originalGradientAlpha = gradientPaint.getAlpha();
+
+                    if (transitionParams.animateShareButton) {
+                        final int targetGradientPaintAlpha = (int) (originalGradientAlpha * targetAnimationAlpha);
+                        themedPaint.setAlpha(targetGradientPaintAlpha);
+                        Log.d("ChatMessageCell", "originalGradientAlpha: " + originalAlpha + ", targetGradientAlpha: " + targetGradientPaintAlpha);
+                    }
+
+                    canvas.drawRoundRect(rect, AndroidUtilities.dp(16), AndroidUtilities.dp(16), gradientPaint);
+
+                    gradientPaint.setAlpha(originalGradientAlpha);
+                }
+
+                if (sideButtonType == SideButtonType.GO) {
                     Drawable goIconDrawable = getThemedDrawable(Theme.key_drawable_goIcon);
                     if (currentMessageObject.isOutOwner()) {
                         setDrawableBounds(goIconDrawable, sideStartX + AndroidUtilities.dp(10), sideStartY + AndroidUtilities.dp(9));
@@ -10402,7 +10450,17 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 } else {
                     Drawable drawable = getThemedDrawable(Theme.key_drawable_shareIcon);
                     setDrawableBounds(drawable, sideStartX + AndroidUtilities.dp(8), sideStartY + AndroidUtilities.dp(9));
+
+                    final int originalDrawableAlpha = DrawableCompat.getAlpha(drawable);
+
+                    if (transitionParams.animateShareButton) {
+                        drawable.setAlpha((int) (targetAnimationAlpha * 255));
+                    }
+
                     drawable.draw(canvas);
+
+                    // TODO(ilyagulya): seems like a hack. Drawable mutation did not work for some reason.
+                    drawable.setAlpha(originalDrawableAlpha);
                 }
             }
         }
@@ -10813,8 +10871,23 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         return false;
     }
 
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({
+            SideButtonType.NONE,
+            SideButtonType.SHARE,
+            SideButtonType.GO,
+            SideButtonType.COMMENT,
+    })
+    private @interface SideButtonType {
+        int NONE = 0;
+        int SHARE = 1;
+        int GO = 2;
+        int COMMENT = 3;
+    }
+
     public void drawCommentButton(Canvas canvas, float alpha) {
-        if (drawSideButton != 3) {
+        if (sideButtonType != SideButtonType.COMMENT) {
             return;
         }
         int height = AndroidUtilities.dp(32);
@@ -11618,7 +11691,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                     float ly = layoutHeight - AndroidUtilities.dp(45.1f - h2);
                     canvas.drawLine(x, ly, endX - AndroidUtilities.dp(14), ly, Theme.chat_replyLinePaint);
                 }
-                if (commentLayout != null && drawSideButton != 3) {
+                if (commentLayout != null && sideButtonType != SideButtonType.COMMENT) {
                     Theme.chat_replyNamePaint.setColor(getThemedColor(currentMessageObject.isOutOwner() ? Theme.key_chat_outPreviewInstantText : Theme.key_chat_inPreviewInstantText));
                     commentX = x + AndroidUtilities.dp(33 + avatarsOffset);
                     if (drawCommentNumber) {
@@ -14100,7 +14173,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 if (commentLayout != null) {
                     info.addChild(ChatMessageCell.this, COMMENT);
                 }
-                if (drawSideButton == 1) {
+                if (sideButtonType == SideButtonType.SHARE) {
                     info.addChild(ChatMessageCell.this, SHARE);
                 }
                 if (replyNameLayout != null) {
@@ -14679,6 +14752,11 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         int animateForwardNameWidth;
         int lastForwardNameWidth;
 
+        @SideButtonType
+        private int lastSideButtonType;
+        // TODO(ilyagulya): Support animation for all side buttons
+        private boolean animateShareButton;
+
         public void recordDrawingState() {
             wasDraw = true;
             lastDrawingImageX = photoImage.getImageX();
@@ -14746,6 +14824,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             lastForwardNameX = forwardNameX;
             lastForwardedNamesOffset = namesOffset;
             lastForwardNameWidth = forwardedNameWidth;
+
+            lastSideButtonType = sideButtonType;
         }
 
         public void recordDrawingStatePreview() {
@@ -14937,6 +15017,15 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                     changed = true;
                 }
             }
+
+            if (currentMessageObject != null) {
+                final boolean shareButtonGone = lastSideButtonType == SideButtonType.SHARE && sideButtonType == SideButtonType.NONE;
+                final boolean shareButtonAppeared = lastSideButtonType == SideButtonType.NONE && sideButtonType == SideButtonType.SHARE;
+                if (shareButtonGone || shareButtonAppeared) {
+                    animateShareButton = true;
+                    changed = true;
+                }
+            }
             return changed;
         }
 
@@ -14997,6 +15086,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             animateForwardedLayout = false;
             animatingForwardedNameLayout[0] = null;
             animatingForwardedNameLayout[1] = null;
+
+            animateShareButton = false;
         }
 
         public boolean supportChangeAnimation() {
@@ -15035,6 +15126,10 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
 
                 return (drawClock ? 4 : 0) | (drawError ? 8 : 0);
             }
+        }
+
+        public boolean inProgress() {
+            return animateChangeProgress != 1f;
         }
     }
 

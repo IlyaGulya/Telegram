@@ -15,6 +15,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.LocaleController;
@@ -31,6 +33,8 @@ public class HintView extends FrameLayout {
 
     public static final int TYPE_SEARCH_AS_LIST = 3;
     public static final int TYPE_POLL_VOTE = 5;
+    public static final int TYPE_FORWARD_BUTTON_TOP = 100;
+    public static final int TYPE_FORWARD_BUTTON_BOTTOM = 101;
 
     private TextView textView;
     private ImageView imageView;
@@ -48,7 +52,7 @@ public class HintView extends FrameLayout {
 
     private int bottomOffset;
     private long showingDuration = 2000;
-    private final Theme.ResourcesProvider resourcesProvider;
+    @Nullable private final Theme.ResourcesProvider resourcesProvider;
 
     public HintView(Context context, int type) {
         this(context, type, false, null);
@@ -62,7 +66,7 @@ public class HintView extends FrameLayout {
         this(context, type, false, resourcesProvider);
     }
 
-    public HintView(Context context, int type, boolean topArrow, Theme.ResourcesProvider resourcesProvider) {
+    public HintView(Context context, int type, boolean topArrow, @Nullable Theme.ResourcesProvider resourcesProvider) {
         super(context);
         this.resourcesProvider = resourcesProvider;
 
@@ -77,6 +81,9 @@ public class HintView extends FrameLayout {
             textView.setMaxWidth(AndroidUtilities.dp(310));
         } else if (type == 4) {
             textView.setMaxWidth(AndroidUtilities.dp(280));
+        } else if (type == TYPE_FORWARD_BUTTON_BOTTOM || type == TYPE_FORWARD_BUTTON_TOP) {
+            // TODO(ilyagulya): get max width from screen size
+            textView.setMaxWidth(AndroidUtilities.dp(310));
         } else {
             textView.setMaxWidth(AndroidUtilities.dp(250));
         }
@@ -94,6 +101,8 @@ public class HintView extends FrameLayout {
                 textView.setPadding(AndroidUtilities.dp(7), AndroidUtilities.dp(6), AndroidUtilities.dp(7), AndroidUtilities.dp(7));
             } else if (currentType == 7 || currentType == 8 || currentType == 9) {
                 textView.setPadding(AndroidUtilities.dp(8), AndroidUtilities.dp(7), AndroidUtilities.dp(8), AndroidUtilities.dp(8));
+            } else if (currentType == TYPE_FORWARD_BUTTON_TOP || currentType == TYPE_FORWARD_BUTTON_BOTTOM) {
+                textView.setPadding(AndroidUtilities.dp(11), AndroidUtilities.dp(7), AndroidUtilities.dp(11), AndroidUtilities.dp(7));
             } else {
                 textView.setPadding(AndroidUtilities.dp(currentType == 0 ? 54 : 5), AndroidUtilities.dp(6), AndroidUtilities.dp(5), AndroidUtilities.dp(7));
             }
@@ -345,6 +354,8 @@ public class HintView extends FrameLayout {
             top += view.getMeasuredHeight() + getMeasuredHeight() + AndroidUtilities.dp(8);
         } else if (currentType == 8) {
             top -= AndroidUtilities.dp(10);
+        } else if (currentType == TYPE_FORWARD_BUTTON_TOP) {
+            top += view.getMeasuredHeight() + getMeasuredHeight() + AndroidUtilities.dp(8);
         }
 
         int centerX;
@@ -373,7 +384,7 @@ public class HintView extends FrameLayout {
         top -= bottomOffset;
 
         int parentWidth = parentView.getMeasuredWidth();
-        if (isTopArrow && currentType != 6 && currentType != 7 && currentType != 8) {
+        if (isTopArrow && currentType != 6 && currentType != 7 && currentType != 8 && currentType != TYPE_FORWARD_BUTTON_TOP) {
             setTranslationY(extraTranslationY + (translationY = AndroidUtilities.dp(44)));
         } else {
             setTranslationY(extraTranslationY + (translationY = top - getMeasuredHeight()));
@@ -472,6 +483,14 @@ public class HintView extends FrameLayout {
 
     public void setShowingDuration(long showingDuration) {
         this.showingDuration = showingDuration;
+    }
+
+    public void setTextPaddings(int vertical, int horizontal) {
+        textView.setPadding(horizontal, vertical, horizontal, vertical);
+    }
+
+    public void setTextMaxWidth(int width) {
+        textView.setMaxWidth(width);
     }
 
     public void setBottomOffset(int offset) {

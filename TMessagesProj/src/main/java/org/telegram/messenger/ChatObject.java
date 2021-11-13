@@ -13,6 +13,8 @@ import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.SparseArray;
 
+import androidx.collection.LongSparseArray;
+
 import com.google.android.exoplayer2.util.Log;
 
 import org.telegram.messenger.voip.Instance;
@@ -25,8 +27,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-
-import androidx.collection.LongSparseArray;
 
 public class ChatObject {
 
@@ -1585,6 +1585,10 @@ public class ChatObject {
 
     public static boolean canWriteToChat(TLRPC.Chat chat) {
         return !isChannel(chat) || chat.creator || chat.admin_rights != null && chat.admin_rights.post_messages || !chat.broadcast && !chat.gigagroup || chat.gigagroup && ChatObject.hasAdminRights(chat);
+    }
+
+    public static boolean isPrivate(TLRPC.Chat chat) {
+        return TextUtils.isEmpty(chat.username);
     }
 
     public static String getBannedRightsString(TLRPC.TL_chatBannedRights bannedRights) {

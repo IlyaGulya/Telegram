@@ -44,6 +44,7 @@ import org.telegram.ui.Components.LayoutHelper;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class ActionBarPopupWindow extends PopupWindow {
@@ -419,11 +420,12 @@ public class ActionBarPopupWindow extends PopupWindow {
                 if (child.getVisibility() != View.VISIBLE) {
                     continue;
                 }
-                Object tag = child.getTag(R.id.object_tag);
+                Object gapTag = child.getTag(R.id.object_tag);
                 if (child instanceof ActionBarMenuSubItem) {
                     ((ActionBarMenuSubItem) child).updateSelectorBackground(child == firstVisible || prevGap, child == lastVisible);
                 }
-                if (tag != null) {
+                boolean isGap = gapTag != null;
+                if (isGap) {
                     prevGap = true;
                 } else {
                     prevGap = false;
