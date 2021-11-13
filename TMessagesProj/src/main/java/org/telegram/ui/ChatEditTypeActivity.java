@@ -45,6 +45,7 @@ import org.telegram.ui.Cells.ShadowSectionCell;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
+import org.telegram.ui.Components.AlertsCreator;
 import org.telegram.ui.Components.EditTextBoldCursor;
 import org.telegram.ui.Components.InviteLinkBottomSheet;
 import org.telegram.ui.Components.LayoutHelper;
@@ -447,13 +448,18 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
     }
 
     private void processDone() {
-        if (trySetUsername()) {
-            maybeUpdateSavingRestriction();
+        // TODO: Show loader!
+        if (trySetUsername() && tryToggleNoforwards()) {
             finishFragment();
         }
     }
 
+    private boolean settingUsername;
+
     private boolean trySetUsername() {
+        if (settingUsername) {
+            return false;
+        }
         if (getParentActivity() == null) {
             return false;
         }
@@ -472,7 +478,9 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
         String newUserName = isPrivate ? "" : usernameTextView.getText().toString();
         if (!oldUserName.equals(newUserName)) {
             if (!ChatObject.isChannel(currentChat)) {
+                settingUsername = true;
                 getMessagesController().convertToMegaGroup(getParentActivity(), chatId, this, param -> {
+                    settingUsername = false;
                     if (param != 0) {
                         chatId = param;
                         currentChat = getMessagesController().getChat(param);
@@ -488,10 +496,26 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
         return true;
     }
 
-    private void maybeUpdateSavingRestriction() {
-        if (currentChat.noforwards != isRestrictSavingContent) {
-            getMessagesController().toggleNoforwards(currentChat, isRestrictSavingContent);
+    private boolean togglingNoforwards;
+
+    private boolean tryToggleNoforwards() {
+        if (togglingNoforwards) {
+            return false;
         }
+        if (currentChat.noforwards != isRestrictSavingContent) {
+            togglingNoforwards = true;
+            getMessagesController().toggleChatNoforwards(currentChat, isRestrictSavingContent, () -> {
+                togglingNoforwards = false;
+                    currentChat = getMessagesController().getChat(chatId);
+                    processDone();
+            }, (req, error) -> {
+                togglingNoforwards = false;
+                // TODO: handle errors
+                AlertsCreator.processError(currentAccount, error, ChatEditTypeActivity.this, req);
+            });
+            return false;
+        }
+        return true;
     }
 
     private void loadAdminedChannels() {

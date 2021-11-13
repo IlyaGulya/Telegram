@@ -25,6 +25,7 @@ import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 import android.util.SparseIntArray;
 
+import androidx.annotation.Nullable;
 import androidx.collection.LongSparseArray;
 import androidx.core.app.NotificationManagerCompat;
 
@@ -14605,21 +14606,37 @@ public class MessagesController extends BaseController implements NotificationCe
                 .apply();
     }
 
-    public void toggleNoforwards(TLRPC.Chat chat, boolean noforward) {
+    public void toggleChatNoforwards(TLRPC.Chat chat,
+                                     boolean noforward,
+                                     @Nullable final SuccessCallback onSuccess,
+                                     @Nullable final ErrorCallback onError) {
         TLRPC.TL_messages_toggleNoForwards req = new TLRPC.TL_messages_toggleNoForwards();
         req.peer = getInputPeer(chat);
         req.enabled = noforward;
         getConnectionsManager().sendRequest(req, (response, error) -> {
-            if (response instanceof TLRPC.TL_boolTrue) {
-                AndroidUtilities.runOnUIThread(() -> {
-                    chat.noforwards = noforward;
-                    final ArrayList<TLRPC.Chat> chatsToUpdate = new ArrayList();
-                    chatsToUpdate.add(chat);
-
-                    getMessagesStorage().putUsersAndChats(null, chatsToUpdate, true, true);
-                });
+            if (error == null) {
+                processUpdates((TLRPC.Updates) response, false);
+                if (onSuccess != null) {
+                    AndroidUtilities.runOnUIThread(() -> {
+                        onSuccess.onSuccess();
+                    }, 1000);
+                }
+            } else {
+                if (onError != null) {
+                    AndroidUtilities.runOnUIThread(() -> {
+                        onError.onError(req, error);
+                    });
+                }
             }
         }, ConnectionsManager.RequestFlagInvokeAfter);
+    }
+
+    public interface SuccessCallback {
+        void onSuccess();
+    }
+
+    public interface ErrorCallback {
+        void onError(TLRPC.TL_messages_toggleNoForwards req, TLRPC.TL_error error);
     }
 
     public interface MessagesLoadedCallback {
