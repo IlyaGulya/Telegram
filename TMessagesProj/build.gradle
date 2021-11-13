@@ -328,6 +328,17 @@ android {
                 arguments '-DANDROID_STL=c++_static', '-DANDROID_PLATFORM=android-16', "-j=16"
             }
         }
+
+        Properties properties = new Properties()
+
+        if (project.rootProject.file('local.properties').canRead()) {
+            properties.load(new FileInputStream(project.rootProject.file('local.properties')))
+        }
+
+        buildConfigField "boolean", "TG_DEBUG", properties.getOrDefault("telegram.debug", "false")
+        buildConfigField "boolean", "TG_DEBUG_PRIVATE", properties.getOrDefault("telegram.debugPrivate", "false")
+        buildConfigField "int", "TG_APP_ID", properties.getOrDefault("telegram.appId", "4")
+        buildConfigField "String", "TG_APP_HASH", "\"${properties.get("telegram.appHash", "014b35b6184100b085b0d0572f9b5103")}\""
     }
 }
 
