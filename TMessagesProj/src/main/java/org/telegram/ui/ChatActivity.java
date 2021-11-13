@@ -489,6 +489,8 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
     private AnimatorSet replyButtonAnimation;
     private AnimatorSet editButtonAnimation;
     private AnimatorSet forwardButtonAnimation;
+    private AnimatorSet saveButtonAnimation;
+    private AnimatorSet copyButtonAnimation;
 
     private int lastStableId = 10;
 
@@ -1979,6 +1981,11 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                         }
                     }
                 } else if (id == copy) {
+                    if (isForwardsRestricted()) {
+                        // TODO: maybe show another message rather than "can't forward" when trying to save media?
+                        showForwardRestrictedHint(actionBar.findViewWithTag(copy), true);
+                        return;
+                    }
                     String str = "";
                     long previousUid = 0;
                     for (int a = 1; a >= 0; a--) {
@@ -2014,6 +2021,11 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 } else if (id == forward) {
                     openForward(actionBar.findViewWithTag(forward), true);
                 } else if (id == save_to) {
+                    if (isForwardsRestricted()) {
+                        // TODO: maybe show another message rather than "can't forward" when trying to save media?
+                        showForwardRestrictedHint(actionBar.findViewWithTag(save_to), true);
+                        return;
+                    }
                     ArrayList<MessageObject> messageObjects = new ArrayList<>();
                     for (int a = 1; a >= 0; a--) {
                         for (int b = 0; b < selectedMessagesIds[a].size(); b++) {
@@ -12408,13 +12420,13 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 updateForwardButtonsStates(shouldAnimateForwardButtonStates);
 
                 if (saveItem != null) {
-                    saveItem.setVisibility(((canSaveMusicCount > 0 && canSaveDocumentsCount == 0) || (canSaveMusicCount == 0 && canSaveDocumentsCount > 0)) && cantSaveMessagesCount == 0 ? View.VISIBLE : View.GONE);
                     saveItem.setContentDescription(canSaveMusicCount > 0 ? LocaleController.getString("SaveToMusic", R.string.SaveToMusic) : LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
                 }
+                updateSaveButtonState(false);
 
                 int copyVisible = copyItem.getVisibility();
                 int starVisible = starItem.getVisibility();
-                copyItem.setVisibility(selectedMessagesCanCopyIds[0].size() + selectedMessagesCanCopyIds[1].size() != 0 ? View.VISIBLE : View.GONE);
+                updateCopyButtonState(false);
                 starItem.setVisibility(getMediaDataController().canAddStickerToFavorites() && (selectedMessagesCanStarIds[0].size() + selectedMessagesCanStarIds[1].size()) == selectedCount ? View.VISIBLE : View.GONE);
                 int newCopyVisible = copyItem.getVisibility();
                 int newStarVisible = starItem.getVisibility();
@@ -12564,6 +12576,83 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                         editButtonAnimation.start();
                     }
                 }
+            }
+        }
+    }
+
+    // TODO: Use Map<String, AnimatorSet> for storing items animations and make common animator.
+    private void updateCopyButtonState(boolean shouldAnimate) {
+        ActionBarMenuItem copyItem = actionBar.createActionMode().getItem(copy);
+
+        if (copyItem == null) return;
+
+        final boolean buttonShouldBeGrayedOff = isForwardsRestricted();
+        final boolean itemIsVisible = copyItem.getVisibility() == View.VISIBLE;
+        final boolean itemShouldBeVisible = selectedMessagesCanCopyIds[0].size() + selectedMessagesCanCopyIds[1].size() != 0;
+
+        if (itemIsVisible != itemShouldBeVisible) {
+            copyItem.setVisibility(itemShouldBeVisible ? View.VISIBLE : View.GONE);
+            copyItem.setAlpha(buttonShouldBeGrayedOff ? 0.5f : 1f);
+        } else if (itemIsVisible) {
+            if (shouldAnimate) {
+                if (copyButtonAnimation != null) {
+                    copyButtonAnimation.cancel();
+                    copyButtonAnimation = null;
+                }
+
+                copyButtonAnimation = new AnimatorSet();
+                ArrayList<Animator> animators = new ArrayList<>();
+                animators.add(ObjectAnimator.ofFloat(copyItem, View.ALPHA, buttonShouldBeGrayedOff ? 0.5f : 1f));
+
+                copyButtonAnimation.playTogether(animators);
+                copyButtonAnimation.setDuration(100);
+                copyButtonAnimation.addListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        copyButtonAnimation = null;
+                    }
+                });
+                copyButtonAnimation.start();
+            } else {
+                copyItem.setAlpha(buttonShouldBeGrayedOff ? 0.5f : 1f);
+            }
+        }
+    }
+
+    private void updateSaveButtonState(boolean shouldAnimate) {
+        ActionBarMenuItem saveItem = actionBar.createActionMode().getItem(save_to);
+
+        if (saveItem == null) return;
+
+        final boolean buttonShouldBeGrayedOff = isForwardsRestricted();
+        final boolean itemIsVisible = saveItem.getVisibility() == View.VISIBLE;
+        final boolean itemShouldBeVisible = ((canSaveMusicCount > 0 && canSaveDocumentsCount == 0) || (canSaveMusicCount == 0 && canSaveDocumentsCount > 0)) && cantSaveMessagesCount == 0;
+
+        if (itemIsVisible != itemShouldBeVisible) {
+            saveItem.setVisibility(itemShouldBeVisible ? View.VISIBLE : View.GONE);
+            saveItem.setAlpha(buttonShouldBeGrayedOff ? 0.5f : 1f);
+        } else if (itemIsVisible) {
+            if (shouldAnimate) {
+                if (saveButtonAnimation != null) {
+                    saveButtonAnimation.cancel();
+                    saveButtonAnimation = null;
+                }
+
+                saveButtonAnimation = new AnimatorSet();
+                ArrayList<Animator> animators = new ArrayList<>();
+                animators.add(ObjectAnimator.ofFloat(saveItem, View.ALPHA, buttonShouldBeGrayedOff ? 0.5f : 1f));
+
+                saveButtonAnimation.playTogether(animators);
+                saveButtonAnimation.setDuration(100);
+                saveButtonAnimation.addListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        saveButtonAnimation = null;
+                    }
+                });
+                saveButtonAnimation.start();
+            } else {
+                saveItem.setAlpha(buttonShouldBeGrayedOff ? 0.5f : 1f);
             }
         }
     }
@@ -14699,6 +14788,8 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 if (this.isForwardsRestricted != isForwardsRestricted) {
                     this.isForwardsRestricted = isForwardsRestricted;
                     updateForwardButtonsStates(true);
+                    updateCopyButtonState(true);
+                    updateSaveButtonState(true);
                     chatAdapter.notifyDataSetChanged(true);
                     if (isForwardsRestricted && this.visibleShareAlert != null) {
                         this.visibleShareAlert.dismiss();
