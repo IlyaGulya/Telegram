@@ -20083,7 +20083,11 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
 
 
                 ActionBarMenuSubItem cell = new ActionBarMenuSubItem(getParentActivity(), true, true, themeDelegate);
-                cell.setText(LocaleController.getString("ForwardsRestrictedMessageInfo", R.string.ForwardsRestrictedMessageInfo));
+                if (ChatObject.isChannel(this.currentChat)) {
+                    cell.setText(LocaleController.getString("ChannelForwardsRestrictedMessageInfo", R.string.ChannelForwardsRestrictedMessageInfo));
+                } else {
+                    cell.setText(LocaleController.getString("GroupForwardsRestrictedMessageInfo", R.string.GroupForwardsRestrictedMessageInfo));
+                }
                 cell.setItemHeight(56);
                 cell.setTag(R.id.width_tag, 240);
                 cell.setMultiline();
