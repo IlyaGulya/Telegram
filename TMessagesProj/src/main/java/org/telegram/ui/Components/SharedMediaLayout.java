@@ -3021,7 +3021,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
         if (chat != null) {
             if (forwardsRestrictedHint == null) {
                 // TODO(ilyagulya) : remove cast to FrameLayout
-                forwardsRestrictedHint = Hints.addForwardRestrictedHintTo((FrameLayout) parentFragment.getFragmentView(), null, false, chat);
+                forwardsRestrictedHint = Hints.addForwardRestrictedHintTo((FrameLayout) parentFragment.getFragmentView(), null, false, false, chat);
             }
             forwardsRestrictedHint.showForView(forwardItem.getContentView(), true);
         }

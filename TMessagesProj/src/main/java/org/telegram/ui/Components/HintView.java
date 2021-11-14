@@ -27,6 +27,10 @@ import org.telegram.ui.ActionBar.SimpleTextView;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.ChatMessageCell;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 
 @SuppressWarnings("FieldCanBeLocal")
 public class HintView extends FrameLayout {
@@ -35,6 +39,15 @@ public class HintView extends FrameLayout {
     public static final int TYPE_POLL_VOTE = 5;
     public static final int TYPE_FORWARD_BUTTON_TOP = 100;
     public static final int TYPE_FORWARD_BUTTON_BOTTOM = 101;
+    public static final int TYPE_FORWARD_BUTTON_PHOTO_VIEWER_TOP = 102;
+    public static final int TYPE_FORWARD_BUTTON_PHOTO_VIEWER_BOTTOM = 103;
+
+    public static final Set<Integer> FORWARDS_RESTRICTED_TYPES = new HashSet<>(Arrays.asList(
+            TYPE_FORWARD_BUTTON_TOP,
+            TYPE_FORWARD_BUTTON_BOTTOM,
+            TYPE_FORWARD_BUTTON_PHOTO_VIEWER_TOP,
+            TYPE_FORWARD_BUTTON_PHOTO_VIEWER_BOTTOM
+    ));
 
     private TextView textView;
     private ImageView imageView;
@@ -74,14 +87,18 @@ public class HintView extends FrameLayout {
         isTopArrow = topArrow;
 
         textView = new CorrectlyMeasuringTextView(context);
-        textView.setTextColor(getThemedColor(Theme.key_chat_gifSaveHintText));
+        if (type == TYPE_FORWARD_BUTTON_PHOTO_VIEWER_BOTTOM || type == TYPE_FORWARD_BUTTON_PHOTO_VIEWER_TOP) {
+            textView.setTextColor(getThemedColor(Theme.key_photoviewer_forwardsRestrictedHintText));
+        } else {
+            textView.setTextColor(getThemedColor(Theme.key_chat_gifSaveHintText));
+        }
         textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
         textView.setMaxLines(2);
         if (type == 7 || type == 8 || type == 9) {
             textView.setMaxWidth(AndroidUtilities.dp(310));
         } else if (type == 4) {
             textView.setMaxWidth(AndroidUtilities.dp(280));
-        } else if (type == TYPE_FORWARD_BUTTON_BOTTOM || type == TYPE_FORWARD_BUTTON_TOP) {
+        } else if (FORWARDS_RESTRICTED_TYPES.contains(type)) {
             // TODO(ilyagulya): get max width from screen size
             textView.setMaxWidth(AndroidUtilities.dp(310));
         } else {
@@ -94,14 +111,18 @@ public class HintView extends FrameLayout {
             addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 30, Gravity.LEFT | Gravity.TOP, 0, topArrow ? 6 : 0, 0, topArrow ? 0 : 6));
         } else {
             textView.setGravity(Gravity.LEFT | Gravity.TOP);
-            textView.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(currentType == 7 || currentType == 8 || currentType == 9 ? 6 : 3), getThemedColor(Theme.key_chat_gifSaveHintBackground)));
+            if (currentType == TYPE_FORWARD_BUTTON_PHOTO_VIEWER_TOP || currentType == TYPE_FORWARD_BUTTON_PHOTO_VIEWER_BOTTOM) {
+                textView.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(3), getThemedColor(Theme.key_photoviewer_forwardsRestrictedHintBackground)));
+            } else {
+                textView.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(currentType == 7 || currentType == 8 || currentType == 9 ? 6 : 3), getThemedColor(Theme.key_chat_gifSaveHintBackground)));
+            }
             if (currentType == TYPE_POLL_VOTE || currentType == 4) {
                 textView.setPadding(AndroidUtilities.dp(9), AndroidUtilities.dp(6), AndroidUtilities.dp(9), AndroidUtilities.dp(7));
             } else if (currentType == 2) {
                 textView.setPadding(AndroidUtilities.dp(7), AndroidUtilities.dp(6), AndroidUtilities.dp(7), AndroidUtilities.dp(7));
             } else if (currentType == 7 || currentType == 8 || currentType == 9) {
                 textView.setPadding(AndroidUtilities.dp(8), AndroidUtilities.dp(7), AndroidUtilities.dp(8), AndroidUtilities.dp(8));
-            } else if (currentType == TYPE_FORWARD_BUTTON_TOP || currentType == TYPE_FORWARD_BUTTON_BOTTOM) {
+            } else if (FORWARDS_RESTRICTED_TYPES.contains(currentType)) {
                 textView.setPadding(AndroidUtilities.dp(11), AndroidUtilities.dp(7), AndroidUtilities.dp(11), AndroidUtilities.dp(7));
             } else {
                 textView.setPadding(AndroidUtilities.dp(currentType == 0 ? 54 : 5), AndroidUtilities.dp(6), AndroidUtilities.dp(5), AndroidUtilities.dp(7));
@@ -121,7 +142,11 @@ public class HintView extends FrameLayout {
 
         arrowImageView = new ImageView(context);
         arrowImageView.setImageResource(topArrow ? R.drawable.tooltip_arrow_up : R.drawable.tooltip_arrow);
-        arrowImageView.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_chat_gifSaveHintBackground), PorterDuff.Mode.MULTIPLY));
+        if (type == TYPE_FORWARD_BUTTON_PHOTO_VIEWER_BOTTOM || type == TYPE_FORWARD_BUTTON_PHOTO_VIEWER_TOP) {
+            arrowImageView.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_photoviewer_forwardsRestrictedHintBackground), PorterDuff.Mode.MULTIPLY));
+        } else {
+            arrowImageView.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_chat_gifSaveHintBackground), PorterDuff.Mode.MULTIPLY));
+        }
         addView(arrowImageView, LayoutHelper.createFrame(14, 6, Gravity.LEFT | (topArrow ? Gravity.TOP : Gravity.BOTTOM), 0, 0, 0, 0));
     }
 
@@ -354,7 +379,7 @@ public class HintView extends FrameLayout {
             top += view.getMeasuredHeight() + getMeasuredHeight() + AndroidUtilities.dp(8);
         } else if (currentType == 8) {
             top -= AndroidUtilities.dp(10);
-        } else if (currentType == TYPE_FORWARD_BUTTON_TOP) {
+        } else if (currentType == TYPE_FORWARD_BUTTON_TOP || currentType == TYPE_FORWARD_BUTTON_PHOTO_VIEWER_TOP) {
             top += view.getMeasuredHeight() + getMeasuredHeight() + AndroidUtilities.dp(8);
         }
 
@@ -384,7 +409,7 @@ public class HintView extends FrameLayout {
         top -= bottomOffset;
 
         int parentWidth = parentView.getMeasuredWidth();
-        if (isTopArrow && currentType != 6 && currentType != 7 && currentType != 8 && currentType != TYPE_FORWARD_BUTTON_TOP) {
+        if (isTopArrow && currentType != 6 && currentType != 7 && currentType != 8 && currentType != TYPE_FORWARD_BUTTON_TOP && currentType != TYPE_FORWARD_BUTTON_PHOTO_VIEWER_TOP) {
             setTranslationY(extraTranslationY + (translationY = AndroidUtilities.dp(44)));
         } else {
             setTranslationY(extraTranslationY + (translationY = top - getMeasuredHeight()));

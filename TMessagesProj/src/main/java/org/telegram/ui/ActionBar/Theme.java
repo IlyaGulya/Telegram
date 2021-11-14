@@ -3509,6 +3509,9 @@ public class Theme {
     public static final String key_voipgroup_windowBackgroundWhiteInputField = "voipgroup_windowBackgroundWhiteInputField";
     public static final String key_voipgroup_windowBackgroundWhiteInputFieldActivated = "voipgroup_windowBackgroundWhiteInputFieldActivated";
 
+    public static final String key_photoviewer_forwardsRestrictedHintBackground = "photoviewer_forwardsRestrictedHintBackground";
+    public static final String key_photoviewer_forwardsRestrictedHintText = "photoviewer_forwardsRestrictedHintText";
+
     public static final String key_passport_authorizeBackground = "passport_authorizeBackground";
     public static final String key_passport_authorizeBackgroundSelected = "passport_authorizeBackgroundSelected";
     public static final String key_passport_authorizeText = "passport_authorizeText";
@@ -4516,6 +4519,9 @@ public class Theme {
         defaultColors.put(key_voipgroup_mutedByAdminMuteButtonDisabled, 0x3378A3FF);
         defaultColors.put(key_voipgroup_windowBackgroundWhiteInputField, 0xffdbdbdb);
         defaultColors.put(key_voipgroup_windowBackgroundWhiteInputFieldActivated, 0xff37a9f0);
+
+        defaultColors.put(key_photoviewer_forwardsRestrictedHintBackground, 0xf9222222);
+        defaultColors.put(key_photoviewer_forwardsRestrictedHintText, 0xffffffff);
 
 
         fallbackKeys.put(key_chat_inAdminText, key_chat_inTimeText);

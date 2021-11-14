@@ -17,8 +17,14 @@ public class Hints {
     public static HintView addForwardRestrictedHintTo(FrameLayout parent,
                                                       @Nullable Theme.ResourcesProvider resourcesProvider,
                                                       boolean arrowOnTop,
+                                                      boolean photoViewer,
                                                       TLRPC.Chat chat) {
-        final int hintType = arrowOnTop ? HintView.TYPE_FORWARD_BUTTON_TOP : HintView.TYPE_FORWARD_BUTTON_BOTTOM;
+        int hintType;
+        if (photoViewer) {
+            hintType = arrowOnTop ? HintView.TYPE_FORWARD_BUTTON_PHOTO_VIEWER_TOP : HintView.TYPE_FORWARD_BUTTON_PHOTO_VIEWER_BOTTOM;
+        } else {
+            hintType = arrowOnTop ? HintView.TYPE_FORWARD_BUTTON_TOP : HintView.TYPE_FORWARD_BUTTON_BOTTOM;
+        }
         HintView hint = new HintView(parent.getContext(), hintType, arrowOnTop, resourcesProvider);
         final FrameLayout.LayoutParams layoutParams = LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP, 10, 0, 10, 0);
         parent.addView(hint, layoutParams);

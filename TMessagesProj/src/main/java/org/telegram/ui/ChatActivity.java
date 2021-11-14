@@ -9595,7 +9595,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
 
     private HintView createForwardRestrictedHintFor(boolean actionBar) {
         SizeNotifierFrameLayout frameLayout = (SizeNotifierFrameLayout) fragmentView;
-        return Hints.addForwardRestrictedHintTo(frameLayout, themeDelegate, actionBar, this.currentChat);
+        return Hints.addForwardRestrictedHintTo(frameLayout, themeDelegate, actionBar, false, this.currentChat);
     }
 
 

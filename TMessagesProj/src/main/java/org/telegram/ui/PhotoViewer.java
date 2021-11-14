@@ -86,6 +86,7 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.ViewPropertyAnimator;
 import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 import android.view.WindowManager;
@@ -199,6 +200,8 @@ import org.telegram.ui.Components.FloatSeekBarAccessibilityDelegate;
 import org.telegram.ui.Components.GestureDetector2;
 import org.telegram.ui.Components.GroupedPhotosListView;
 import org.telegram.ui.Components.HideViewAfterAnimation;
+import org.telegram.ui.Components.HintView;
+import org.telegram.ui.Components.Hints;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.MediaActivity;
 import org.telegram.ui.Components.NumberPicker;
@@ -1208,9 +1211,11 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     private final static int gallery_menu_speed_fast = 24;
     private final static int gallery_menu_speed_veryfast = 25;
 
-    private static final Set<Integer> ACTION_BAR_ITEMS_HIDDEN_WHEN_FORWARDS_RESTRICTED = new HashSet<>(Arrays.asList(
+    private static final Set<Integer> ACTION_BAR_SUBITEMS_HIDDEN_WHEN_FORWARDS_RESTRICTED = new HashSet<>(Arrays.asList(
             gallery_menu_save,
-            gallery_menu_savegif
+            gallery_menu_savegif,
+            gallery_menu_share,
+            gallery_menu_openin
     ));
     private final Map<Integer, Boolean> menuItemsVisibility = new HashMap<>();
 
@@ -3435,6 +3440,24 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
     private void updateForwardsRestrictions() {
         isForwardsRestricted = currentChat != null && currentChat.noforwards;
+        final Boolean sendItemVisible = actionBarItemsVisibility.get(sendItem);
+        final float maxAlpha = isForwardsRestricted ? 0.5f : 1f;
+        if (sendItemVisible != null && sendItemVisible) {
+            final ViewPropertyAnimator animator = sendItem.animate();
+            animator.cancel();
+
+            animator.alpha(maxAlpha)
+                    .setDuration(100)
+                    .setInterpolator(new LinearInterpolator())
+                    .start();
+        }
+        final ViewPropertyAnimator animator = shareButton.animate();
+        animator.cancel();
+
+        animator.alpha(maxAlpha)
+                .setDuration(100)
+                .setInterpolator(new LinearInterpolator())
+                .start();
     }
 
     private void showMenuItem(int id) {
@@ -3449,7 +3472,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         for (Map.Entry<Integer, Boolean> entry : menuItemsVisibility.entrySet()) {
             final Integer id = entry.getKey();
             final Boolean visible = entry.getValue();
-            final boolean itemShouldBeHiddenWhenForwardsRestricted = ACTION_BAR_ITEMS_HIDDEN_WHEN_FORWARDS_RESTRICTED.contains(id);
+            final boolean itemShouldBeHiddenWhenForwardsRestricted = ACTION_BAR_SUBITEMS_HIDDEN_WHEN_FORWARDS_RESTRICTED.contains(id);
             if (!visible || (itemShouldBeHiddenWhenForwardsRestricted && isForwardsRestricted)) {
                 menuItem.hideSubItem(id);
             } else {
@@ -3473,6 +3496,10 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
     private void onSharePressed() {
         if (parentActivity == null || !allowShare) {
+            return;
+        }
+        if (isForwardsRestricted) {
+            showForwardRestrictedHint(shareButton, false);
             return;
         }
         try {
@@ -3939,6 +3966,10 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                     currentMessageObject = null;
                 } else if (id == gallery_menu_send) {
                     if (currentMessageObject == null || !(parentActivity instanceof LaunchActivity)) {
+                        return;
+                    }
+                    if (isForwardsRestricted) {
+                        showForwardRestrictedHint(sendItem, true);
                         return;
                     }
                     ((LaunchActivity) parentActivity).switchToAccount(currentMessageObject.currentAccount, true);
@@ -4696,6 +4727,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         shareButton.setImageResource(R.drawable.share);
         shareButton.setScaleType(ImageView.ScaleType.CENTER);
         shareButton.setBackgroundDrawable(Theme.createSelectorDrawable(Theme.ACTION_BAR_WHITE_SELECTOR_COLOR));
+        shareButton.setAlpha(isForwardsRestricted ? 0.5f : 1f);
         bottomButtonsLayout.addView(shareButton, LayoutHelper.createFrame(50, LayoutHelper.MATCH_PARENT));
         shareButton.setOnClickListener(v -> onSharePressed());
         shareButton.setContentDescription(LocaleController.getString("ShareFile", R.string.ShareFile));
@@ -6029,6 +6061,27 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             playButtonAccessibilityOverlay.setFocusable(true);
             containerView.addView(playButtonAccessibilityOverlay, LayoutHelper.createFrame(64, 64, Gravity.CENTER));
         }
+    }
+
+    private HintView forwardRestrictedTooltipForTop;
+    private HintView forwardRestrictedTooltipForBottom;
+
+    private void showForwardRestrictedHint(View view, boolean top) {
+        if (top) {
+            if (forwardRestrictedTooltipForTop == null) {
+                forwardRestrictedTooltipForTop = createForwardRestrictedHintFor(true);
+            }
+            forwardRestrictedTooltipForTop.showForView(view, true);
+        } else {
+            if (forwardRestrictedTooltipForBottom == null) {
+                forwardRestrictedTooltipForBottom = createForwardRestrictedHintFor(false);
+            }
+            forwardRestrictedTooltipForBottom.showForView(view, true);
+        }
+    }
+
+    private HintView createForwardRestrictedHintFor(boolean top) {
+        return Hints.addForwardRestrictedHintTo(containerView, null, top, true, this.currentChat);
     }
 
     private void showScheduleDatePickerDialog() {
@@ -9605,7 +9658,13 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
     }
 
     private void setItemVisible(View itemView, boolean visible, boolean animate) {
-        setItemVisible(itemView, visible, animate, 1.0f);
+        float maxAlpha = 1f;
+        if (itemView == sendItem) {
+            if (isForwardsRestricted) {
+                maxAlpha = 0.5f;
+            }
+        }
+        setItemVisible(itemView, visible, animate, maxAlpha);
     }
 
     private void setItemVisible(View itemView, boolean visible, boolean animate, float maxAlpha) {
@@ -10564,7 +10623,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             bottomLayout.setTag(null);
 
             allowShare = true;
-            shareItem.setVisibility(View.VISIBLE);
+            shareItem.setVisibility(isForwardsRestricted ? View.GONE : View.VISIBLE);
 
             if (currentAnimation != null) {
                 menuItem.setVisibility(View.VISIBLE);
