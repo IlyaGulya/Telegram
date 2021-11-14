@@ -4716,7 +4716,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (newChat != null) {
                     currentChat = newChat;
                     createActionBarMenu(true);
-                    sharedMediaLayout.updateForwardsRestriction();
+                    if (sharedMediaLayout != null) {
+                        sharedMediaLayout.updateForwardsRestriction();
+                    }
                 }
                 if (currentChat.megagroup && (loadChannelParticipants || !byChannelUsers)) {
                     getChannelParticipants(true);
