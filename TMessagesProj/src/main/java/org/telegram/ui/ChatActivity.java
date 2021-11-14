@@ -1840,7 +1840,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
         if (currentUser != null) {
             MediaController.getInstance().stopMediaObserver();
         }
-        if (currentEncryptedChat != null) {
+        if (currentEncryptedChat != null || isForwardsRestricted) {
             try {
                 if (Build.VERSION.SDK_INT >= 23 && (SharedConfig.passcodeHash.length() == 0 || SharedConfig.allowScreenCapture)) {
                     AndroidUtilities.setFlagSecure(this, false);
@@ -1877,6 +1877,16 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
             pinchToZoomHelper.clear();
         }
         chatThemeBottomSheet = null;
+    }
+
+    private void maybePreventScreenshots() {
+        try {
+            if (Build.VERSION.SDK_INT >= 23 && (SharedConfig.passcodeHash.length() == 0 || SharedConfig.allowScreenCapture)) {
+                AndroidUtilities.setFlagSecure(this, currentEncryptedChat != null || isForwardsRestricted);
+            }
+        } catch (Throwable e) {
+            FileLog.e(e);
+        }
     }
 
     @Override
@@ -7715,13 +7725,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
         chatScrollHelper.setScrollListener(this::invalidateMessagesVisiblePart);
         chatScrollHelper.setAnimationCallback(chatScrollHelperCallback);
 
-        try {
-            if (currentEncryptedChat != null && Build.VERSION.SDK_INT >= 23 && (SharedConfig.passcodeHash.length() == 0 || SharedConfig.allowScreenCapture)) {
-                AndroidUtilities.setFlagSecure(this, true);
-            }
-        } catch (Throwable e) {
-            FileLog.e(e);
-        }
+        maybePreventScreenshots();
         if (oldMessage != null) {
             chatActivityEnterView.setFieldText(oldMessage);
         }
@@ -14787,6 +14791,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 boolean isForwardsRestricted = getMessagesController().getChat(chatFull.id).noforwards;
                 if (this.isForwardsRestricted != isForwardsRestricted) {
                     this.isForwardsRestricted = isForwardsRestricted;
+                    maybePreventScreenshots();
                     updateForwardButtonsStates(true);
                     updateCopyButtonState(true);
                     updateSaveButtonState(true);
