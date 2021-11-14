@@ -130,6 +130,7 @@ public class ChatEditActivity extends BaseFragment implements ImageUpdater.Image
     private boolean signMessages;
 
     private boolean isChannel;
+    private boolean isForwardsRestricted;
 
     private boolean historyHidden;
 
@@ -209,6 +210,7 @@ public class ChatEditActivity extends BaseFragment implements ImageUpdater.Image
 
         avatarDrawable.setInfo(5, currentChat.title, null);
         isChannel = ChatObject.isChannel(currentChat) && !currentChat.megagroup;
+        isForwardsRestricted = currentChat.noforwards;
         imageUpdater.parentFragment = this;
         imageUpdater.setDelegate(this);
         signMessages = currentChat.signatures;
@@ -1004,7 +1006,12 @@ public class ChatEditActivity extends BaseFragment implements ImageUpdater.Image
                 boolean infoWasEmpty = info == null;
                 info = chatFull;
                 historyHidden = !ChatObject.isChannel(currentChat) || info.hidden_prehistory;
-                updateFields(false);
+                final TLRPC.Chat chat = getMessagesController().getChat(chatId);
+                boolean updateChat = false;
+                if (chat != null && chat.noforwards != isForwardsRestricted) {
+                    updateChat = true;
+                }
+                updateFields(updateChat);
                 if (infoWasEmpty) {
                     loadLinksCount();
                 }
@@ -1268,6 +1275,7 @@ public class ChatEditActivity extends BaseFragment implements ImageUpdater.Image
             TLRPC.Chat chat = getMessagesController().getChat(chatId);
             if (chat != null) {
                 currentChat = chat;
+                isForwardsRestricted = chat.noforwards;
             }
         }
         boolean isPrivate = TextUtils.isEmpty(currentChat.username);
@@ -1344,9 +1352,17 @@ public class ChatEditActivity extends BaseFragment implements ImageUpdater.Image
             } else {
                 String type;
                 if (isChannel) {
-                    type = isPrivate ? LocaleController.getString("TypePrivate", R.string.TypePrivate) : LocaleController.getString("TypePublic", R.string.TypePublic);
+                    if (isForwardsRestricted) {
+                        type = LocaleController.getString("TypePrivateRestricted", R.string.TypePrivateRestricted);
+                    } else {
+                        type = isPrivate ? LocaleController.getString("TypePrivate", R.string.TypePrivate) : LocaleController.getString("TypePublic", R.string.TypePublic);
+                    }
                 } else {
-                    type = isPrivate ? LocaleController.getString("TypePrivateGroup", R.string.TypePrivateGroup) : LocaleController.getString("TypePublicGroup", R.string.TypePublicGroup);
+                    if (isForwardsRestricted) {
+                        type = LocaleController.getString("TypePrivateGroupRestricted", R.string.TypePrivateGroupRestricted);
+                    } else {
+                        type = isPrivate ? LocaleController.getString("TypePrivateGroup", R.string.TypePrivateGroup) : LocaleController.getString("TypePublicGroup", R.string.TypePublicGroup);
+                    }
                 }
                 if (isChannel) {
                     typeCell.setTextAndValue(LocaleController.getString("ChannelType", R.string.ChannelType), type, historyCell != null && historyCell.getVisibility() == View.VISIBLE || linkedCell != null && linkedCell.getVisibility() == View.VISIBLE);

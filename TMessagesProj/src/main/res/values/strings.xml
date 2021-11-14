@@ -593,8 +593,10 @@
     <string name="GroupSettingsTitle">Group Settings</string>
     <string name="ChannelSettingsTitle">Channel Settings</string>
     <string name="TypePrivate">Private</string>
+    <string name="TypePrivateRestricted">Private restricted</string>
     <string name="TypePublic">Public</string>
     <string name="TypePrivateGroup">Private</string>
+    <string name="TypePrivateGroupRestricted">Private restricted</string>
     <string name="TypePublicGroup">Public</string>
     <string name="TypeLocationGroup">Link</string>
     <string name="TypeLocationGroupEdit">Tap to add a permanent link</string>
