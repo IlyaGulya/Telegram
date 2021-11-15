@@ -48,11 +48,11 @@ public class HeaderCell extends FrameLayout {
         this(context, Theme.key_windowBackgroundWhiteBlueHeader, padding, 15, false, null);
     }
 
-    public HeaderCell(Context context, String textColorKey, int padding, int topMargin, boolean text2) {
-        this(context, textColorKey, padding, topMargin, text2, null);
+    public HeaderCell(Context context, String textColorKey, int paddingHorizontal, int topMargin, boolean text2) {
+        this(context, textColorKey, paddingHorizontal, topMargin, text2, null);
     }
 
-    public HeaderCell(Context context, String textColorKey, int padding, int topMargin, boolean text2, Theme.ResourcesProvider resourcesProvider) {
+    public HeaderCell(Context context, String textColorKey, int paddingHorizontal, int topMargin, boolean text2, Theme.ResourcesProvider resourcesProvider) {
         super(context);
         this.resourcesProvider = resourcesProvider;
 
@@ -64,13 +64,13 @@ public class HeaderCell extends FrameLayout {
         textView.setMinHeight(AndroidUtilities.dp(height - topMargin));
         textView.setTextColor(getThemedColor(textColorKey));
         textView.setTag(textColorKey);
-        addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, padding, topMargin, padding, 0));
+        addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, paddingHorizontal, topMargin, paddingHorizontal, 0));
 
         if (text2) {
             textView2 = new SimpleTextView(getContext());
             textView2.setTextSize(13);
             textView2.setGravity((LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.TOP);
-            addView(textView2, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.TOP, padding, 21, padding, 0));
+            addView(textView2, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.TOP, paddingHorizontal, 21, paddingHorizontal, 0));
         }
 
         ViewCompat.setAccessibilityHeading(this, true);

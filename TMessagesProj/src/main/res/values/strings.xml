@@ -308,6 +308,7 @@
     <string name="ImporImportingStickersService">Importing stickers...</string>
     <string name="ImportHeader">Import messages and media to...</string>
     <string name="ImportHeaderContacts">Or choose one of your contacts</string>
+    <string name="CloseSendAsDialogButtonDescription">Close "Send As" dialog</string>
     <!--widgets-->
     <string name="EditWidget">Edit Widget</string>
     <string name="EditWidgetContactsInfo">Display shortcuts to your most important chats for quick access.\n\nIf nobody is selected, your most frequent contacts will be shown in this widget.</string>
@@ -4822,4 +4823,7 @@
 
     <string name="ForwardsFromChannelRestricted">Forwards from this channel are restricted</string>
     <string name="ForwardsFromGroupRestricted">Forwards from this group are restricted</string>
+
+    <string name="SendAsPopupTitle">Send message as…</string>
+    <string name="SendAsPopupPersonalAccount">personal account</string>
 </resources>

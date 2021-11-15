@@ -21,6 +21,10 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.core.widget.NestedScrollView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
@@ -43,10 +47,6 @@ import org.telegram.ui.Cells.GroupCreateUserCell;
 import org.telegram.ui.Cells.ShareDialogCell;
 
 import java.util.ArrayList;
-
-import androidx.core.widget.NestedScrollView;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 public class JoinCallAlert extends BottomSheet {
 
@@ -686,7 +686,6 @@ public class JoinCallAlert extends BottomSheet {
 
         @Override
         public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
-            int position = holder.getAdapterPosition();
             long did = MessageObject.getPeerId(selectedPeer);
             if (holder.itemView instanceof GroupCreateUserCell) {
                 GroupCreateUserCell cell = (GroupCreateUserCell) holder.itemView;
@@ -700,10 +699,6 @@ public class JoinCallAlert extends BottomSheet {
                     }
                 }
                 cell.setChecked(did == id, false);
-            } else {
-                ShareDialogCell cell = (ShareDialogCell) holder.itemView;
-                long id = cell.getCurrentDialog();
-                cell.setChecked(did == id, false);
             }
         }
 
@@ -714,10 +709,11 @@ public class JoinCallAlert extends BottomSheet {
             String status;
             if (did > 0) {
                 object = MessagesController.getInstance(currentAccount).getUser(did);
-                status = LocaleController.getString("VoipGroupPersonalAccount", R.string.VoipGroupPersonalAccount);
+                status = LocaleController.getString("SendAsPopupPersonalAccount", R.string.SendAsPopupPersonalAccount);
             } else {
-                object = MessagesController.getInstance(currentAccount).getChat(-did);
-                status = null;
+                final TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(-did);
+                object = chat;
+                status = LocaleController.formatPluralString("Subscribers", chat.participants_count);
             }
             if (currentType == TYPE_CREATE) {
                 ShareDialogCell cell = (ShareDialogCell) holder.itemView;

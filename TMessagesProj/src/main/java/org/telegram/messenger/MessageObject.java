@@ -57,6 +57,7 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import androidx.annotation.Nullable;
 import androidx.collection.LongSparseArray;
 
 public class MessageObject {
@@ -4602,7 +4603,7 @@ public class MessageObject {
         return getPeerId(message.from_id);
     }
 
-    public static long getPeerId(TLRPC.Peer peer) {
+    public static long getPeerId(@Nullable TLRPC.Peer peer) {
         if (peer == null) {
             return 0;
         }

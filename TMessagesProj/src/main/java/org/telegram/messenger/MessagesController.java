@@ -14631,6 +14631,46 @@ public class MessagesController extends BaseController implements NotificationCe
         }, ConnectionsManager.RequestFlagInvokeAfter);
     }
 
+    public void getSendAs(TLRPC.Chat chat, SendPeersCallback callback) {
+        TLRPC.TL_channels_getSendAs req = new TLRPC.TL_channels_getSendAs();
+        req.peer = getInputPeer(chat);
+        getConnectionsManager().sendRequest(req, (response, error) -> {
+            if (error == null) {
+                TLRPC.TL_channels_sendAsPeers res = (TLRPC.TL_channels_sendAsPeers) response;
+                if (callback != null) {
+                    AndroidUtilities.runOnUIThread(() -> {
+                        callback.onSuccess(res.peers, res.chats, res.users);
+                    });
+                }
+            } else {
+
+            }
+        });
+    }
+
+    public void setDefaultSendAs(TLRPC.Chat chat, TLRPC.Peer peer) {
+        TLRPC.TL_messages_saveDefaultSendAs req = new TLRPC.TL_messages_saveDefaultSendAs();
+        req.peer = getInputPeer(chat);
+        req.send_as = getInputPeer(peer);
+        getConnectionsManager().sendRequest(req, (response, error) -> {
+           if (error == null) {
+
+           } else {
+
+           }
+        });
+    }
+
+    public void updateLocalDefaultSendAs(TLRPC.Chat chat, TLRPC.Peer peer) {
+        final TLRPC.ChatFull chatFull = getChatFull(chat.id);
+        chatFull.default_send_as = peer;
+        getMessagesStorage().updateChatInfo(chatFull, true);
+    }
+
+    public interface SendPeersCallback {
+        void onSuccess(ArrayList<TLRPC.Peer> peers, ArrayList<TLRPC.Chat> chats, ArrayList<TLRPC.User> users);
+    }
+
     public interface SuccessCallback {
         void onSuccess();
     }

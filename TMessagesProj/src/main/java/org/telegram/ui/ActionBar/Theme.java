@@ -60,6 +60,11 @@ import android.util.SparseArray;
 import android.util.StateSet;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+import androidx.core.graphics.ColorUtils;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.telegram.messenger.AndroidUtilities;
@@ -67,7 +72,6 @@ import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.Bitmaps;
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.ChatThemeController;
-import org.telegram.messenger.Emoji;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.ImageLocation;
@@ -78,6 +82,7 @@ import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
+import org.telegram.messenger.SvgHelper;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.Utilities;
 import org.telegram.messenger.time.SunDate;
@@ -101,7 +106,6 @@ import org.telegram.ui.Components.RoundStatusDrawable;
 import org.telegram.ui.Components.ScamDrawable;
 import org.telegram.ui.Components.SendingFileDrawable;
 import org.telegram.ui.Components.StatusDrawable;
-import org.telegram.messenger.SvgHelper;
 import org.telegram.ui.Components.ThemeEditorView;
 import org.telegram.ui.Components.TypingDotsDrawable;
 import org.telegram.ui.RoundVideoProgressShadow;
@@ -120,15 +124,9 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.UiThread;
-import androidx.core.graphics.ColorUtils;
 
 public class Theme {
 
@@ -2870,6 +2868,7 @@ public class Theme {
     public static Path[] chat_updatePath = new Path[3];
     public static Drawable chat_flameIcon;
     public static Drawable chat_gifIcon;
+    public static Drawable chat_sendAsCrossIcon;
 
     private static AudioVisualizerDrawable chat_msgAudioVisualizeDrawable;
     private static HashMap<MessageObject, AudioVisualizerDrawable> animatedOutVisualizerDrawables;
@@ -3343,6 +3342,8 @@ public class Theme {
     public static final String key_chat_messagePanelVoiceLockBackground = "key_chat_messagePanelVoiceLockBackground";
     public static final String key_chat_messagePanelVoiceLockShadow = "key_chat_messagePanelVoiceLockShadow";
     public static final String key_chat_messagePanelVideoFrame = "chat_messagePanelVideoFrame";
+    public static final String key_chat_messagePanelCloseSendAsDialogBackground = "chat_messagePanelCloseSendAsDialogBackground";
+    public static final String key_chat_messagePanelCloseSendAsDialogBackgroundPressed = "chat_messagePanelCloseSendAsDialogBackgroundPressed";
     public static final String key_chat_topPanelBackground = "chat_topPanelBackground";
     public static final String key_chat_topPanelClose = "chat_topPanelClose";
     public static final String key_chat_topPanelLine = "chat_topPanelLine";
@@ -4229,6 +4230,8 @@ public class Theme {
         defaultColors.put(key_chat_messagePanelCursor, 0xff54a1db);
         defaultColors.put(key_chat_messagePanelShadow, 0xff000000);
         defaultColors.put(key_chat_messagePanelIcons, 0xff8e959b);
+        defaultColors.put(key_chat_messagePanelCloseSendAsDialogBackground, 0xff50A7EA);
+        defaultColors.put(key_chat_messagePanelCloseSendAsDialogBackgroundPressed, 0x0f50A7EA);
         defaultColors.put(key_chat_recordedVoicePlayPause, 0xffffffff);
         defaultColors.put(key_chat_recordedVoiceDot, 0xffda564d);
         defaultColors.put(key_chat_recordedVoiceBackground, 0xff5DADE8);
@@ -8391,6 +8394,7 @@ public class Theme {
 
             chat_flameIcon = resources.getDrawable(R.drawable.burn).mutate();
             chat_gifIcon = resources.getDrawable(R.drawable.msg_round_gif_m).mutate();
+            chat_sendAsCrossIcon = createCircleDrawableWithIcon(AndroidUtilities.dp(30), R.drawable.ic_close_dialog_send_as);
 
             chat_fileStatesDrawable[0][0] = createCircleDrawableWithIcon(AndroidUtilities.dp(44), R.drawable.msg_round_play_m);
             chat_fileStatesDrawable[0][1] = createCircleDrawableWithIcon(AndroidUtilities.dp(44), R.drawable.msg_round_play_m);
@@ -8447,6 +8451,8 @@ public class Theme {
 
             chat_composeShadowDrawable = context.getResources().getDrawable(R.drawable.compose_panel_shadow).mutate();
             chat_composeShadowRoundDrawable = context.getResources().getDrawable(R.drawable.sheet_shadow_round).mutate();
+
+
 
             try {
                 int bitmapSize = AndroidUtilities.roundMessageSize + AndroidUtilities.dp(6);

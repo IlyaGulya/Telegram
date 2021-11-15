@@ -20,7 +20,6 @@ import android.widget.FrameLayout;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
-import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
@@ -64,6 +63,8 @@ public class GroupCreateUserCell extends FrameLayout {
     private float checkProgress;
     private Paint paint;
 
+    private boolean isForSendAsDialog = false;
+
     private boolean forceDarkTheme;
 
     private boolean showSelfAsSaved;
@@ -72,10 +73,10 @@ public class GroupCreateUserCell extends FrameLayout {
         this(context, checkBoxType, pad, selfAsSaved, false);
     }
 
-    public GroupCreateUserCell(Context context, int checkBoxType, int pad, boolean selfAsSaved, boolean forCall) {
+    public GroupCreateUserCell(Context context, int checkBoxType, int pad, boolean selfAsSaved, boolean forceDarkTheme) {
         super(context);
         this.checkBoxType = checkBoxType;
-        forceDarkTheme = forCall;
+        this.forceDarkTheme = forceDarkTheme;
 
         drawDivider = false;
         padding = pad;
@@ -87,7 +88,7 @@ public class GroupCreateUserCell extends FrameLayout {
         addView(avatarImageView, LayoutHelper.createFrame(46, 46, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, LocaleController.isRTL ? 0 : (13 + padding), 6, LocaleController.isRTL ? (13 + padding) : 0, 0));
 
         nameTextView = new SimpleTextView(context);
-        nameTextView.setTextColor(Theme.getColor(forceDarkTheme ? Theme.key_voipgroup_nameText : Theme.key_windowBackgroundWhiteBlackText));
+        nameTextView.setTextColor(Theme.getColor(this.forceDarkTheme ? Theme.key_voipgroup_nameText : Theme.key_windowBackgroundWhiteBlackText));
         nameTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         nameTextView.setTextSize(16);
         nameTextView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP);
@@ -124,6 +125,10 @@ public class GroupCreateUserCell extends FrameLayout {
         currentName = name;
         drawDivider = false;
         update(0);
+    }
+
+    public void setIsForSendAsDialog(boolean isForSendAsDialog) {
+        this.isForSendAsDialog = isForSendAsDialog;
     }
 
     public void setChecked(boolean checked, boolean animated) {
@@ -189,7 +194,10 @@ public class GroupCreateUserCell extends FrameLayout {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(currentObject instanceof String ? 50 : 58), MeasureSpec.EXACTLY));
+        final int ourWidthMeasureSpec = MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY);
+        final int ourHeight = AndroidUtilities.dp(isForSendAsDialog ? 56 : currentObject instanceof String ? 50 : 58);
+        final int ourHeightMeasureSpec = MeasureSpec.makeMeasureSpec(ourHeight, MeasureSpec.EXACTLY);
+        super.onMeasure(ourWidthMeasureSpec, ourHeightMeasureSpec);
     }
 
     public void recycle() {
