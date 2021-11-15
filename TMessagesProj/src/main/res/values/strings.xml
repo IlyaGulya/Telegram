@@ -4801,6 +4801,8 @@
     <string name="RequestToJoinGroupApproved">Your request to join the group was approved</string>
     <string name="RequestToJoinChannelApproved">Your request to join the channel was approved</string>
     <string name="JoinedViaInviteLinkApproved">un1 joined via invite link un2, approved by un3</string>
+    <string name="RestrictedForwardsChannel">un1 restricted forwards from this channel</string>
+    <string name="AllowedForwardsChannel">un1 allowed forwards from this channel</string>
     <string name="NoSubscribeRequests">No join requests</string>
     <string name="NoSubscribeRequestsDescription">There are no pending requests\nto join this channel.</string>
     <string name="CalendarWeekNameShortMonday">M</string>
