@@ -3585,6 +3585,10 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
             if (newMsg.from_id == null) {
                 newMsg.from_id = newMsg.peer_id;
             }
+            final TLRPC.Peer sendAsPeer = getSendAsPeerFromPeer(newMsg.peer_id);
+            if (sendAsPeer != null) {
+                newMsg.from_id = sendAsPeer;
+            }
             newMsg.send_state = MessageObject.MESSAGE_SEND_STATE_SENDING;
 
             long groupId = 0;
@@ -4443,6 +4447,16 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
             getNotificationCenter().postNotificationName(NotificationCenter.messageSendError, newMsg.id);
             processSentMessage(newMsg.id);
         }
+    }
+
+    private TLRPC.Peer getSendAsPeerFromPeer(TLRPC.Peer peer) {
+        if (peer instanceof TLRPC.TL_peerChannel) {
+            final TLRPC.ChatFull info = getMessagesController().getChatFull(peer.channel_id);
+            if (info != null) {
+                return info.default_send_as;
+            }
+        }
+        return null;
     }
 
     private TLRPC.InputPeer getSendAsInputPeerFromInputPeer(TLRPC.InputPeer peer) {
