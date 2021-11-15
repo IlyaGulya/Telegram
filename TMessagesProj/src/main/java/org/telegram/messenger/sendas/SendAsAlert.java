@@ -139,25 +139,8 @@ public class SendAsAlert {
         Drawable shadowDrawable3 = ContextCompat.getDrawable(contentView.getContext(), R.drawable.popup_fixed_alert).mutate();
         shadowDrawable3.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_actionBarDefaultSubmenuBackground), PorterDuff.Mode.MULTIPLY));
         linearLayout.setBackground(shadowDrawable3);
-        boolean[] backButtonPressed = new boolean[1];
 
-        ActionBarPopupWindow popup = new ActionBarPopupWindow(linearLayout, LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT) {
-//            @Override
-//            public void dismiss(boolean animated) {
-//                super.dismiss(animated);
-//                if (backButtonPressed[0]) {
-//                    linearLayout.animate().alpha(0).scaleX(0).scaleY(0).setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT).setDuration(350);
-//                } else {
-//                    final ActionBarPopupWindow actionBarPopupWindow = popupRef.get();
-//                    if (actionBarPopupWindow != null) {
-//                        actionBarPopupWindow.dismiss();
-//                    }
-//                }
-//                if (Bulletin.getVisibleBulletin() != null && Bulletin.getVisibleBulletin().tag == 1) {
-//                    Bulletin.getVisibleBulletin().hide();
-//                }
-//            }
-        };
+        ActionBarPopupWindow popup = new ActionBarPopupWindow(linearLayout, LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT);
         popupRef.set(popup);
         popup.setOnDismissListener(onDismiss);
         popup.setOutsideTouchable(true);
@@ -200,7 +183,6 @@ public class SendAsAlert {
     }
 
     private static class ListAdapter extends RecyclerListView.SectionsAdapter {
-        private static final int PAYLOAD_CHECKED = 1000;
         private static final int POSITION_HEADER = 0;
 
         private static final int ITEM_HEADER = 0;
